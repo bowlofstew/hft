@@ -3,7 +3,7 @@
   <title>hft,</title>
   <link href="http://scarcecapital.com/hft/index.xml" rel="self" />
   <link href="http://scarcecapital.com/hft"/>
-  <updated>2013-04-18T20:20:48Z</updated>
+  <updated>2013-04-20T20:35:09Z</updated>
   <id>http://scarcecapital.com/hft/index.xml</id>
   <entry>
 <title type="html">Statistical Forecasting</title>
@@ -57,7 +57,7 @@ Rearranging:
 
 \begin{align}
 signal = &amp;\left( \begin{array}{c} 0.95 &amp; -0.05 &amp; ... &amp; -0.05 \end{array} \right) \ast \\
-&amp;\left( \begin{array}{c} p_{0} &amp; p_{1} &amp; ... &amp; p_{19} \end{array} \right) 
+&amp;\left( \begin{array}{c} p_{0} &amp; p_{1} &amp; ... &amp; p_{19} \end{array} \right)
 \end{align}
 
 &lt;p&gt;
@@ -104,7 +104,7 @@ ways of specifying a moving average, moving average signal rules all boil down t
 calculation of price.
 &lt;/p&gt;
 
-\begin{equation} 
+\begin{equation}
 signal = \sum\limits_{i=0}^{n}(k_{i} \ast price_{i})
 \end{equation}
 
@@ -121,7 +121,7 @@ A signal based on historical prices can also be expressed in terms of
 historical returns given:
 &lt;/p&gt;
 
-\begin{align} 
+\begin{align}
 1 + return_{n} = \frac{price_{n}}{price_{(n-1)}}
 \end{align}
 
@@ -129,7 +129,7 @@ historical returns given:
 and thus
 &lt;/p&gt;
 
-\begin{equation} 
+\begin{equation}
 \frac{price_{0}}{price_{n}} =
 \end{equation}
 \begin{equation}
@@ -153,11 +153,13 @@ a signal.  Dividing by \(price_{19}\) (I'm making the maths easier) gives:
 
 \begin{align}
 &amp;(k_{0} \ast \frac{price_{0}}{price_{19}}) + (k_{1} \ast \frac{price_{1}}{price_{19}}) + \cdots + (k_{19} \ast \frac{price_{19}}{price_{19}}) \\
-\Rightarrow &amp;(k_{0} \ast (1 + return_{0} + ... + return_{19}) + \\
-&amp;(k_{1} \ast (1 + return_{1} + ... + return_{19}) + \cdots + (k_{19} \ast 1) \\
+\Rightarrow &amp;k_{0} \ast (1 + return_{0} + ... + return_{19}) + \\
+&amp;k_{1} \ast (1 + return_{1} + ... + return_{19}) + \\
+&amp;\cdots + \\
+&amp;k_{19} \ast (1 + return_{19}) \\
 \Rightarrow&amp;(\sum\limits_{0}^{19}k_{i}) + k_{0} \ast return_{0} + \\
-&amp;(k_{0} +k_{1}) \ast return_{1} + ... \\
-&amp;+ \sum\limits_{0}^{19}k_{i} \ast return_{19}  
+&amp;(k_{0} +k_{1}) \ast return_{1} + ... + \\
+&amp;\sum\limits_{0}^{19}k_{i} \ast return_{19}
 \end{align}
 
 &lt;p&gt;
@@ -168,7 +170,7 @@ The first term (sum of weights) is zero, so for our first price MA example
 \begin{align}
 signal = &amp;0.95 \ast return_{0} +\\
 &amp;0.9 \ast return_{1} + ... +\\
-&amp;0.05 \ast return_{19}  
+&amp;0.05 \ast return_{19}
 \end{align}
 
 &lt;p&gt;
@@ -187,31 +189,29 @@ the previous example:
 &lt;/p&gt;
 &lt;div class="org-src-container"&gt;
 
-&lt;pre class="src src-R"&gt;k.weights
-max.n = 20
-days = 10
-k.weights = -(1-(1/days))^(0:(max.n-1))/days # the ema weights
-k.weights[1] = 1 + k.weights[1] # the current price
-k.weights = k.weights/sum(k.weights) # normalising to sum=1 because we capped the length
-ema.weights = cumsum(k.weights)
-ema.weights = ema.weights/sum(ema.weights) # normalising so sum=1
-sma.weights = seq(0.95,0.00,by=-0.05)/sum(seq(0.95,0.00,by=-0.05))
-require(reshape)
-require(ggplot2)
-df.long = melt(data.frame(ema.weights,sma.weights,time=0:(max.n-1)),id="time") 
-g = ggplot(data=df.long,
-       aes(x=time, y=value,color=variable)) +
-  geom_line()
+&lt;pre class="src src-R"&gt;max.n &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7fa08f;"&gt;20&lt;/span&gt;
+days &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7fa08f;"&gt;10&lt;/span&gt;
+k.weights &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;/&lt;/span&gt;days&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;^&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;:&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;max.n&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;/&lt;/span&gt;days &lt;span style="color: #7f9f7f;"&gt;# &lt;/span&gt;&lt;span style="color: #7f9f7f;"&gt;the ema weights&lt;/span&gt;
+k.weights&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt; k.weights&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt; &lt;span style="color: #7f9f7f;"&gt;# &lt;/span&gt;&lt;span style="color: #7f9f7f;"&gt;the current price&lt;/span&gt;
+ema.weights &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;cumsum&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;k.weights&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+ema.weights &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; ema.weights&lt;span style="color: #b9a16c;"&gt;/&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;sum&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;ema.weights&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt; &lt;span style="color: #7f9f7f;"&gt;# &lt;/span&gt;&lt;span style="color: #7f9f7f;"&gt;normalising so sum=1&lt;/span&gt;
+sma.weights &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;seq&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0.95&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;0.00&lt;/span&gt;,by&lt;span style="color: #b9a16c;"&gt;=-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0.05&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;/&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;sum&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;seq&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0.95&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;0.00&lt;/span&gt;,by&lt;span style="color: #b9a16c;"&gt;=-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0.05&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+&lt;span style="color: #b9a16c;"&gt;require&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;reshape&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #b9a16c;"&gt;require&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;ggplot2&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+df.long &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;melt&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;data.frame&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;ema.weights,sma.weights,time&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;:&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;max.n&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;,id&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"time"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+g &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;ggplot&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;data&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;df.long,
+       &lt;span style="color: #7a92d4;"&gt;aes&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;x&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;time, y&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;value,color&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;variable&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;
+  &lt;span style="color: #7a92d4;"&gt;geom_line&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;()&lt;/span&gt;
+g
 &lt;/pre&gt;
 &lt;/div&gt;
 
 
 &lt;div class="figure"&gt;
-&lt;p&gt;&lt;img src="../blog/statistical-forecasting/rweights.png"  alt="rweights.png"/&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="http://scarcecapital.com/hft/assets/rweights.png"  alt="rweights.png"/&gt;&lt;/p&gt;
 &lt;/div&gt;
 &lt;/div&gt;
 &lt;/div&gt;
-
 &lt;div id="outline-container-sec-2" class="outline-2"&gt;
 &lt;h2 id="sec-2"&gt;momentum signals&lt;/h2&gt;
 &lt;div class="outline-text-2" id="text-2"&gt;
@@ -229,17 +229,17 @@ When the return over the last 12 months is negative, go short the market, otherw
 Assuming there are 250 trading days in a year gives:
 &lt;/p&gt;
 
-\begin{equation} 
+\begin{equation}
 signal = \sum\limits_{i=0}^{249}return_{i}
 \end{equation}
-\begin{equation} 
-signal = 1 \ast return_{0} + 1 \ast return_{1} + ... + 1 \ast return_{249}  
+\begin{equation}
+signal = 1 \ast return_{0} + 1 \ast return_{1} + ... + 1 \ast return_{249}
 \end{equation}
 
 
 &lt;p&gt;
 The weights are different and the signal uses a longer series but the
-underlying formulae structure is exactly the same. 
+underlying formulae structure is exactly the same.
 &lt;/p&gt;
 &lt;/div&gt;
 &lt;/div&gt;
@@ -253,7 +253,7 @@ would be broadly comparable to the VIX):
 
 \begin{align}
 vol_{0} = &amp;\sqrt(0.05 * (return_{0} - av)^{2} + 0.05 * (return_{1} - av)^{2} \\
-&amp;+ ... + 0.05 * (return_{19} - av)^{2}) 
+&amp;+ ... + 0.05 * (return_{19} - av)^{2})
 \end{align}
 
 &lt;p&gt;
@@ -271,9 +271,9 @@ scheme&lt;/i&gt; to calculate volatility in a manner spookily like the EMA
 calculations in return space.
 &lt;/p&gt;
 
-\begin{align} 
-vol_{0} = \sqrt(&amp;0.09 * (return_{0} - av)^{2} + \\
-&amp;0.081 * (return_{1} - av)^{2} + ...) 
+\begin{align}
+vol_{0} = \sqrt(&amp;0.1 * (return_{0} - av)^{2} + \\
+&amp;0.09 * (return_{1} - av)^{2} + ...)
 \end{align}
 
 &lt;p&gt;
@@ -291,9 +291,9 @@ in the volatility formulae:
 &lt;/p&gt;
 
 \begin{align}
-E(return_{0}) = \sqrt(&amp;0.09 * return_{0} + 0.081 * return_{1} + ...) \\ 
-E(vol_{0}) = \sqrt(&amp;0.09 * (return_{0} - return estimate)^{2} + \\
-&amp;0.081 * (return_{1} - return estimate)^{2} + ...) 
+E(return_{0}) = &amp;0.1 * return_{0} + 0.09 * return_{1} + ... \\
+E(vol_{0}) = \sqrt(&amp;0.1 * (return_{0} - return estimate)^{2} + \\
+&amp;0.09 * (return_{1} - return estimate)^{2} + ...)
 \end{align}
 &lt;p&gt;
 (the weighting schemes don't have to be the same)
@@ -311,14 +311,14 @@ volatility weights.
 
 &lt;div class="org-src-container"&gt;
 
-&lt;pre class="src src-R"&gt;weighted.historicals = function(rets, hist.weights) {
-  hmean=as.double(filter(rets,hist.weights$mean,sides=1))
-  hmean[1:length(hist.weights$mean)]=cumsum(rets[1:length(hist.weights$mean)]*t(as.matrix(hist.weights$mean)))
-  xvol=(rets-hmean)^2
-  hvol=as.double(filter(xvol,hist.weights$vol,sides=1))^0.5
-  hvol[1:length(hist.weights$vol)]=cumsum(xvol[length(hist.weights$vol)]*t(as.matrix(hist.weights$vol)))^0.5
-  weighted.historicals=data.frame(hmean=hmean, hvol=hvol)
-}
+&lt;pre class="src src-R"&gt;weighted.historicals &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #f0dfaf; font-weight: bold;"&gt;function&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;rets, hist.weights&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt; &lt;span style="color: #bf89d1;"&gt;{&lt;/span&gt;
+  hmean&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;as.double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;filter&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;rets,hist.weights$mean,sides&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+  hmean&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;hist.weights$mean&lt;span style="color: #bf89d1;"&gt;)]&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;cumsum&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;rets&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;hist.weights$mean&lt;span style="color: #bf89d1;"&gt;)]&lt;/span&gt;*&lt;span style="color: #7a92d4;"&gt;t&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;as.matrix&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;hist.weights$mean&lt;span style="color: #bf89d1;"&gt;)))&lt;/span&gt;
+  xvol&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;rets&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;hmean&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;^&lt;span style="color: #7fa08f;"&gt;2&lt;/span&gt;
+  hvol&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;as.double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;filter&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;xvol,hist.weights$vol,sides&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;^&lt;span style="color: #7fa08f;"&gt;0.5&lt;/span&gt;
+  hvol&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;hist.weights$vol&lt;span style="color: #bf89d1;"&gt;)]&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;cumsum&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;xvol&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;hist.weights$vol&lt;span style="color: #bf89d1;"&gt;)]&lt;/span&gt;*&lt;span style="color: #7a92d4;"&gt;t&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;as.matrix&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;hist.weights$vol&lt;span style="color: #bf89d1;"&gt;)))&lt;/span&gt;^&lt;span style="color: #7fa08f;"&gt;0.5&lt;/span&gt;
+  weighted.historicals&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;data.frame&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;hmean&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;hmean, hvol&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;hvol&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #bf89d1;"&gt;}&lt;/span&gt;
 &lt;/pre&gt;
 &lt;/div&gt;
 &lt;/div&gt;
@@ -345,22 +345,22 @@ leads to spurious predictions.
 
 &lt;p&gt;
 On the other hand, it opens up a richer set of curves to test than the
-standard set used in forecasting. 
+standard set used in forecasting.
 &lt;/p&gt;
 
 &lt;div class="org-src-container"&gt;
 
-&lt;pre class="src src-R"&gt;mom.weights = rep(0.05,20)  
-df.long = melt(data.frame(ema.weights,sma.weights,mom.weights,time=0:(max.n-1)),id="time")
-ggplot(data=df.long,
-         aes(x=time, y=value,color=variable)) +
-    geom_line()
+&lt;pre class="src src-R"&gt;mom.weights &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;rep&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0.05&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;20&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+df.long &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;melt&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;data.frame&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;ema.weights,sma.weights,mom.weights,time&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;:&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;max.n&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;,id&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"time"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;ggplot&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;data&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;df.long,
+         &lt;span style="color: #7a92d4;"&gt;aes&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;x&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;time, y&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;value,color&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;variable&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;
+    &lt;span style="color: #7a92d4;"&gt;geom_line&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;()&lt;/span&gt;
 &lt;/pre&gt;
 &lt;/div&gt;
 
 
 &lt;div class="figure"&gt;
-&lt;p&gt;&lt;img src="../blog/statistical-forecasting/mweights.png"  alt="mweights.png"/&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="http://scarcecapital.com/hft/assets/mweights.png"  alt="mweights.png"/&gt;&lt;/p&gt;
 &lt;/div&gt;
 
 &lt;br&gt;
@@ -407,12 +407,12 @@ Iqfeed sends a ping once a second as part of the stream.
 
 &lt;div class="org-src-container"&gt;
 
-&lt;pre class="src src-R"&gt;t = read.csv("data/streamt.txt",header=FALSE,as.is=TRUE)
-pingtime = strptime(t[,3], "%Y%m%d %H:%M:%S")
-stamp = strptime(paste(strftime(pingtime,"%Y%m%d"), t[,1], sep=" "), "%Y%m%d %H:%M:%OS")    
-latency = as.double(stamp - pingtime)
-df = data.frame(pingtime=pingtime, latency=latency)
-summary(df)
+&lt;pre class="src src-R"&gt;t &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;read.csv&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"data/streamt.txt"&lt;/span&gt;,header&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #8cd0d3; background-color: #3f3f3f;"&gt;FALSE&lt;/span&gt;,as.is&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #8cd0d3; background-color: #3f3f3f;"&gt;TRUE&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+pingtime &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;strptime&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;t&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;3&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;, &lt;span style="color: #cc9393;"&gt;"%Y%m%d %H:%M:%S"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+stamp &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;strptime&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;paste&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;strftime&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;pingtime,&lt;span style="color: #cc9393;"&gt;"%Y%m%d"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;, t&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;, sep&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;" "&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;, &lt;span style="color: #cc9393;"&gt;"%Y%m%d %H:%M:%OS"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+latency &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;as.double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;stamp &lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt; pingtime&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+df &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;data.frame&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;pingtime&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;pingtime, latency&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;latency&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;summary&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;df&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
 &lt;/pre&gt;
 &lt;/div&gt;
 
@@ -464,9 +464,9 @@ summary(df)
 
 &lt;div class="org-src-container"&gt;
 
-&lt;pre class="src src-R"&gt;require(ggplot2)
-qplot(data=df, x=pingtime, y=latency)
-ggsave("ping-latency.svg")
+&lt;pre class="src src-R"&gt;&lt;span style="color: #b9a16c;"&gt;require&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;ggplot2&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;qplot&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;data&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;df, x&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;pingtime, y&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;latency&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;ggsave&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"ping-latency.svg"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
 &lt;/pre&gt;
 &lt;/div&gt;
 
@@ -495,26 +495,26 @@ repository (see &lt;a href="https://github.com/hadley/bigvis"&gt;https://github.
 
 &lt;div class="org-src-container"&gt;
 
-&lt;pre class="src src-R"&gt;install.packages("devtools")
-devtools::install_github("bigvis")
+&lt;pre class="src src-R"&gt;&lt;span style="color: #7a92d4;"&gt;install.packages&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"devtools"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+devtools::&lt;span style="color: #7a92d4;"&gt;install_github&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"bigvis"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
 &lt;/pre&gt;
 &lt;/div&gt;
 
 &lt;p&gt;
 Bigvis doesn't handle non-numeric data (like time), so rather than
-autopilot, I use ggplot directly.   
+autopilot, I use ggplot directly.
 &lt;/p&gt;
 
 &lt;div class="org-src-container"&gt;
 
-&lt;pre class="src src-R"&gt;require(bigvis)
-require(ggplot2)
-dfn = condense(bin(as.double(df$pingtime),60),bin(df$latency,.1))
-dfg = data.frame(as.POSIXct(dfn[,1],origin="1960-01-01", tz="GMT"),dfn[,2],dfn[,3])
-colnames(dfg) = c("Time","Latency","Count")
-g = ggplot(data=dfg,aes(x=Time,y=Latency))
-g + geom_tile(aes(fill=Count)) + scale_fill_gradient(low="#e5e5e5", high = "#444548") + scale_y_continuous(limits=c(-1,1))
-ggsave("ping-latency-condensed.svg")
+&lt;pre class="src src-R"&gt;&lt;span style="color: #b9a16c;"&gt;require&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;bigvis&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #b9a16c;"&gt;require&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;ggplot2&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+dfn &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;condense&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;bin&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;as.double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;df$pingtime&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;60&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,&lt;span style="color: #7a92d4;"&gt;bin&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;df$latency,&lt;span style="color: #7fa08f;"&gt;.1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+dfg &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;data.frame&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;as.POSIXct&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;dfn&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,origin&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"1960-01-01"&lt;/span&gt;, tz&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"GMT"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,dfn&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;2&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,dfn&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;3&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;])&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;colnames&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;dfg&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;c&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"Time"&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;"Latency"&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;"Count"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+g &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;ggplot&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;data&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;dfg,&lt;span style="color: #7a92d4;"&gt;aes&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;x&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;Time,y&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;Latency&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+g &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;geom_tile&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;aes&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;fill&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;Count&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;scale_fill_gradient&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;low&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#e5e5e5"&lt;/span&gt;, high &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #cc9393;"&gt;"#444548"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;scale_y_continuous&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;limits&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;c&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;ggsave&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"ping-latency-condensed.svg"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
 &lt;/pre&gt;
 &lt;/div&gt;
 
@@ -547,12 +547,12 @@ Just looking at the ping counts after binning into one minute intervals:
 
 &lt;div class="org-src-container"&gt;
 
-&lt;pre class="src src-R"&gt;df.dis = condense(bin(as.double(df$pingtime),60))
-dfg = data.frame(as.POSIXct(df.dis[,1],origin="1960-01-01", tz="GMT"),60-df.dis[,2])
-colnames(dfg) = c("Time","Count")
-g = ggplot(data=dfg,aes(x=Time,y=Count))
-g + geom_line(aes())
-ggsave("disconnects.png")
+&lt;pre class="src src-R"&gt;df.dis &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;condense&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;bin&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;as.double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;df$pingtime&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;60&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+dfg &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;data.frame&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;as.POSIXct&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;df.dis&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,origin&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"1960-01-01"&lt;/span&gt;, tz&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"GMT"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;60&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;df.dis&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;2&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;])&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;colnames&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;dfg&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;c&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"Time"&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;"Count"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+g &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;ggplot&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;data&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;dfg,&lt;span style="color: #7a92d4;"&gt;aes&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;x&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;Time,y&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;Count&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+g &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;geom_line&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;aes&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;())&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;ggsave&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"disconnects.png"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
 &lt;/pre&gt;
 &lt;/div&gt;
 
@@ -584,36 +584,36 @@ From the R database of the one day quote ticks&amp;#x2026;
 &lt;li&gt;open data
 &lt;div class="org-src-container"&gt;
 
-&lt;pre class="src src-R"&gt;rm(list = ls())
-require("mmap")
-require("rindex")
-require("plyr")
-require("stringr")
-raw.stream = "streamqh"
-# where the mmap db is located
-db.path = paste("data/",raw.stream,"/",sep="")
+&lt;pre class="src src-R"&gt;&lt;span style="color: #7a92d4;"&gt;rm&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;list &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;ls&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;())&lt;/span&gt;
+&lt;span style="color: #b9a16c;"&gt;require&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"mmap"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #b9a16c;"&gt;require&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"rindex"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #b9a16c;"&gt;require&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"plyr"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #b9a16c;"&gt;require&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"stringr"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+raw.stream &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #cc9393;"&gt;"streamqh"&lt;/span&gt;
+&lt;span style="color: #7f9f7f;"&gt;# &lt;/span&gt;&lt;span style="color: #7f9f7f;"&gt;where the mmap db is located&lt;/span&gt;
+db.path &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;paste&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"data/"&lt;/span&gt;,raw.stream,&lt;span style="color: #cc9393;"&gt;"/"&lt;/span&gt;,sep&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;""&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
 
-load(paste(db.path,".Rdbinfo",sep=""))
-#m = mmap(main.filename, mode=st)
-stream = NULL
-stream$stamp = mmap(paste(db.path,fields[1],".data",sep=""), mode=double())
-stream$code = mmap(paste(db.path,fields[2],".data",sep=""), mode=char(1))
-stream$symbol = mmap(paste(db.path,fields[3],".data",sep=""), mode=char(ticker.length))
-stream$trade = mmap(paste(db.path,fields[4],".data",sep=""), mode=double())
-stream$vol = mmap(paste(db.path,fields[5],".data",sep=""), mode=integer())
-stream$tradetime = mmap(paste(db.path,fields[6],".data",sep=""), mode=double())
-stream$tradeex = mmap(paste(db.path,fields[7],".data",sep=""), mode=double())
-stream$volex = mmap(paste(db.path,fields[8],".data",sep=""), mode=integer())
-stream$tradetimeex = mmap(paste(db.path,fields[9],".data",sep=""), mode=double())
-stream$voltot = mmap(paste(db.path,fields[10],".data",sep=""), mode=integer())
-stream$bid = mmap(paste(db.path,fields[11],".data",sep=""), mode=double())
-stream$bidvol = mmap(paste(db.path,fields[12],".data",sep=""), mode=integer())
-stream$bidtime = mmap(paste(db.path,fields[13],".data",sep=""), mode=double())
-stream$ask = mmap(paste(db.path,fields[14],".data",sep=""), mode=double())
-stream$askvol = mmap(paste(db.path,fields[15],".data",sep=""), mode=integer())
-stream$asktime = mmap(paste(db.path,fields[16],".data",sep=""), mode=double())
-stream$event = mmap(paste(db.path,fields[17],".data",sep=""), mode=char(12))
-stream$id = mmap(paste(db.path,fields[18],".data",sep=""), mode=integer())
+&lt;span style="color: #7a92d4;"&gt;load&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;paste&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;db.path,&lt;span style="color: #cc9393;"&gt;".Rdbinfo"&lt;/span&gt;,sep&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;""&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+&lt;span style="color: #7f9f7f;"&gt;#&lt;/span&gt;&lt;span style="color: #7f9f7f;"&gt;m = mmap(main.filename, mode=st)&lt;/span&gt;
+stream &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #8cd0d3; background-color: #3f3f3f;"&gt;NULL&lt;/span&gt;
+stream$stamp &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;mmap&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;paste&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;db.path,fields&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;".data"&lt;/span&gt;,sep&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;""&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;, mode&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;())&lt;/span&gt;
+stream$code &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;mmap&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;paste&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;db.path,fields&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;2&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;".data"&lt;/span&gt;,sep&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;""&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;, mode&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;char&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+stream$symbol &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;mmap&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;paste&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;db.path,fields&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;3&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;".data"&lt;/span&gt;,sep&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;""&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;, mode&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;char&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;ticker.length&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+stream$trade &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;mmap&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;paste&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;db.path,fields&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;4&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;".data"&lt;/span&gt;,sep&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;""&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;, mode&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;())&lt;/span&gt;
+stream$vol &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;mmap&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;paste&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;db.path,fields&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;5&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;".data"&lt;/span&gt;,sep&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;""&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;, mode&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;integer&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;())&lt;/span&gt;
+stream$tradetime &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;mmap&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;paste&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;db.path,fields&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;6&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;".data"&lt;/span&gt;,sep&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;""&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;, mode&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;())&lt;/span&gt;
+stream$tradeex &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;mmap&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;paste&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;db.path,fields&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;7&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;".data"&lt;/span&gt;,sep&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;""&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;, mode&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;())&lt;/span&gt;
+stream$volex &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;mmap&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;paste&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;db.path,fields&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;8&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;".data"&lt;/span&gt;,sep&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;""&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;, mode&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;integer&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;())&lt;/span&gt;
+stream$tradetimeex &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;mmap&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;paste&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;db.path,fields&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;9&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;".data"&lt;/span&gt;,sep&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;""&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;, mode&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;())&lt;/span&gt;
+stream$voltot &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;mmap&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;paste&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;db.path,fields&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;10&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;".data"&lt;/span&gt;,sep&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;""&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;, mode&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;integer&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;())&lt;/span&gt;
+stream$bid &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;mmap&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;paste&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;db.path,fields&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;11&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;".data"&lt;/span&gt;,sep&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;""&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;, mode&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;())&lt;/span&gt;
+stream$bidvol &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;mmap&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;paste&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;db.path,fields&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;12&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;".data"&lt;/span&gt;,sep&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;""&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;, mode&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;integer&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;())&lt;/span&gt;
+stream$bidtime &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;mmap&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;paste&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;db.path,fields&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;13&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;".data"&lt;/span&gt;,sep&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;""&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;, mode&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;())&lt;/span&gt;
+stream$ask &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;mmap&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;paste&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;db.path,fields&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;14&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;".data"&lt;/span&gt;,sep&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;""&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;, mode&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;())&lt;/span&gt;
+stream$askvol &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;mmap&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;paste&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;db.path,fields&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;15&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;".data"&lt;/span&gt;,sep&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;""&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;, mode&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;integer&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;())&lt;/span&gt;
+stream$asktime &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;mmap&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;paste&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;db.path,fields&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;16&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;".data"&lt;/span&gt;,sep&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;""&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;, mode&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;())&lt;/span&gt;
+stream$event &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;mmap&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;paste&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;db.path,fields&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;17&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;".data"&lt;/span&gt;,sep&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;""&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;, mode&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;char&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;12&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+stream$id &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;mmap&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;paste&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;db.path,fields&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;18&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;".data"&lt;/span&gt;,sep&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;""&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;, mode&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;integer&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;())&lt;/span&gt;
 &lt;/pre&gt;
 &lt;/div&gt;
 &lt;/li&gt;
@@ -621,31 +621,31 @@ stream$id = mmap(paste(db.path,fields[18],".data",sep=""), mode=integer())
 &lt;li&gt;Define events and extract relevant times
 &lt;div class="org-src-container"&gt;
 
-&lt;pre class="src src-R"&gt;n = length(stream$event[])
+&lt;pre class="src src-R"&gt;n &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;stream$event&lt;span style="color: #bf89d1;"&gt;[])&lt;/span&gt;
 
-tC = grepl("C",stream$event[])
-tO = grepl("O",stream$event[])
-ta = grepl("a",stream$event[])
-tb = grepl("b",stream$event[])
-ta = ta &amp;amp; !(tC | tO)
-tb = tb &amp;amp; !(tC | tO | ta)
-tother = !(ta | tb | tC | tO)
+tC &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;grepl&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"C"&lt;/span&gt;,stream$event&lt;span style="color: #bf89d1;"&gt;[])&lt;/span&gt;
+tO &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;grepl&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"O"&lt;/span&gt;,stream$event&lt;span style="color: #bf89d1;"&gt;[])&lt;/span&gt;
+ta &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;grepl&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"a"&lt;/span&gt;,stream$event&lt;span style="color: #bf89d1;"&gt;[])&lt;/span&gt;
+tb &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;grepl&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"b"&lt;/span&gt;,stream$event&lt;span style="color: #bf89d1;"&gt;[])&lt;/span&gt;
+ta &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; ta &amp;amp; !&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;tC | tO&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+tb &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; tb &amp;amp; !&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;tC | tO | ta&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+tother &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; !&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;ta | tb | tC | tO&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
 
-event.category = (1 * tC) + (2 * tO) + (3 * ta) + (4 * tb) + (5 * tother)
+event.category &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt; * tC&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt; &lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;2&lt;/span&gt; * tO&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt; &lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;3&lt;/span&gt; * ta&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt; &lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;4&lt;/span&gt; * tb&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt; &lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;5&lt;/span&gt; * tother&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
 
-event.time = (stream$tradetime[] * tC +
-        stream$tradetimeex[] * tO +
-        stream$asktime[] * ta +
-        stream$bidtime[] * tb +
-        stream$tradetime[] * tother)
+event.time &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;stream$tradetime&lt;span style="color: #bf89d1;"&gt;[]&lt;/span&gt; * tC &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;
+        stream$tradetimeex&lt;span style="color: #bf89d1;"&gt;[]&lt;/span&gt; * tO &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;
+        stream$asktime&lt;span style="color: #bf89d1;"&gt;[]&lt;/span&gt; * ta &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;
+        stream$bidtime&lt;span style="color: #bf89d1;"&gt;[]&lt;/span&gt; * tb &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;
+        stream$tradetime&lt;span style="color: #bf89d1;"&gt;[]&lt;/span&gt; * tother&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
 
-event.time.posix = as.POSIXct(event.time,origin="1960-01-01", tz="GMT")
-event.stamp = stream$stamp[]
+event.time.posix &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;as.POSIXct&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;event.time,origin&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"1960-01-01"&lt;/span&gt;, tz&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"GMT"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+event.stamp &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; stream$stamp&lt;span style="color: #bf89d1;"&gt;[]&lt;/span&gt;
 
-event.latency = event.stamp - event.time  
+event.latency &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; event.stamp &lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt; event.time
 
-event.df = data.frame(symbol=stream$symbol[],event.category,event.time, event.stamp, event.latency)
-summary(event.df)
+event.df &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;data.frame&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;symbol&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;stream$symbol&lt;span style="color: #bf89d1;"&gt;[]&lt;/span&gt;,event.category,event.time, event.stamp, event.latency&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;summary&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;event.df&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
 &lt;/pre&gt;
 &lt;/div&gt;
 
@@ -726,15 +726,15 @@ summary(event.df)
 &lt;li&gt;bigvis manipulations
 &lt;div class="org-src-container"&gt;
 
-&lt;pre class="src src-R"&gt;require("bigvis")
-require("ggplot2")
-df1 = condense(bin(event.df$event.time,60),bin(event.df$event.latency,0.05))
-df2 = df1[(df1$event.df.event.latency &amp;gt; 0) &amp;amp; (df1$event.df.event.latency &amp;lt; 1),]   
-dfg = data.frame(as.POSIXct(df2[,1]+10*60*60,origin="1960-01-01", tz=""),df2[,2],df2[,3])
-colnames(dfg) = c("Time","Latency","Count")
-g = ggplot(data=dfg,aes(x=Time,y=Latency))
-g + geom_tile(aes(fill=Count)) + scale_fill_gradient(low="#e5e5e5", high = "#444548") + scale_y_continuous(limits=c(-1,1))
-ggsave("quote-latency-condensed.svg")
+&lt;pre class="src src-R"&gt;&lt;span style="color: #b9a16c;"&gt;require&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"bigvis"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #b9a16c;"&gt;require&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"ggplot2"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+df1 &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;condense&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;bin&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;event.df$event.time,&lt;span style="color: #7fa08f;"&gt;60&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,&lt;span style="color: #7a92d4;"&gt;bin&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;event.df$event.latency,&lt;span style="color: #7fa08f;"&gt;0.05&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+df2 &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; df1&lt;span style="color: #bf89d1;"&gt;[(&lt;/span&gt;df1$event.df.event.latency &lt;span style="color: #b9a16c;"&gt;&amp;gt;&lt;/span&gt; &lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt; &amp;amp; &lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;df1$event.df.event.latency &lt;span style="color: #b9a16c;"&gt;&amp;lt;&lt;/span&gt; &lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;
+dfg &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;data.frame&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;as.POSIXct&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;df2&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;10&lt;/span&gt;*&lt;span style="color: #7fa08f;"&gt;60&lt;/span&gt;*&lt;span style="color: #7fa08f;"&gt;60&lt;/span&gt;,origin&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"1960-01-01"&lt;/span&gt;, tz&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;""&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,df2&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;2&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,df2&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;3&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;])&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;colnames&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;dfg&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;c&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"Time"&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;"Latency"&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;"Count"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+g &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;ggplot&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;data&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;dfg,&lt;span style="color: #7a92d4;"&gt;aes&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;x&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;Time,y&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;Latency&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+g &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;geom_tile&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;aes&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;fill&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;Count&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;scale_fill_gradient&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;low&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#e5e5e5"&lt;/span&gt;, high &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #cc9393;"&gt;"#444548"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;scale_y_continuous&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;limits&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;c&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;ggsave&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"quote-latency-condensed.svg"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
 &lt;/pre&gt;
 &lt;/div&gt;
 
@@ -755,7 +755,7 @@ common and may be due to TCP issues (dropped packets say).
 
 &lt;div class="org-src-container"&gt;
 
-&lt;pre class="src src-R"&gt;summary(as.factor(stream$symbol[]))
+&lt;pre class="src src-R"&gt;&lt;span style="color: #7a92d4;"&gt;summary&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;as.factor&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;stream$symbol&lt;span style="color: #bf89d1;"&gt;[]))&lt;/span&gt;
 &lt;/pre&gt;
 &lt;/div&gt;
 &lt;/li&gt;
@@ -770,17 +770,17 @@ day was:
 
 &lt;div class="org-src-container"&gt;
 
-&lt;pre class="src src-R"&gt;require(ggplot2)
-require(bigvis)
-ind.emini = indexEQ(ind.symbol,"@ESM13 ")
-df1 = condense(bin(event.df$event.time[ind.emini],300,name="time"),bin(event.df$event.latency[ind.emini],0.05,name="latency"))
-df2 = df1[(df1$latency &amp;gt; 0) &amp;amp; (df1$latency &amp;lt; 2),]
-lat.av = tapply(df2$latency*df2$.count,df2$time,sum)/tapply(df2$.count,df2$time,sum)
-dfg = data.frame(Time=as.POSIXct(as.double(row.names(lat.av))+10*60*60,origin="1960-01-01", tz=""),Latency=lat.av)
-#colnames(dfg) = c("Time","Latency","Count")
-g = ggplot(data=dfg,aes(x=Time,y=Latency))
-g + geom_point()
-ggsave("quote-latency-averagecondensed.svg")
+&lt;pre class="src src-R"&gt;&lt;span style="color: #b9a16c;"&gt;require&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;ggplot2&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #b9a16c;"&gt;require&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;bigvis&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+ind.emini &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;indexEQ&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;ind.symbol,&lt;span style="color: #cc9393;"&gt;"@ESM13 "&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+df1 &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;condense&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;bin&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;event.df$event.time&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;ind.emini&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;300&lt;/span&gt;,name&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"time"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,&lt;span style="color: #7a92d4;"&gt;bin&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;event.df$event.latency&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;ind.emini&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;0.05&lt;/span&gt;,name&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"latency"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+df2 &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; df1&lt;span style="color: #bf89d1;"&gt;[(&lt;/span&gt;df1$latency &lt;span style="color: #b9a16c;"&gt;&amp;gt;&lt;/span&gt; &lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt; &amp;amp; &lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;df1$latency &lt;span style="color: #b9a16c;"&gt;&amp;lt;&lt;/span&gt; &lt;span style="color: #7fa08f;"&gt;2&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;
+lat.av &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;tapply&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;df2$latency*df2$.count,df2$time,sum&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;/&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;tapply&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;df2$.count,df2$time,sum&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+dfg &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;data.frame&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;Time&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;as.POSIXct&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;as.double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;row.names&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;lat.av&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;10&lt;/span&gt;*&lt;span style="color: #7fa08f;"&gt;60&lt;/span&gt;*&lt;span style="color: #7fa08f;"&gt;60&lt;/span&gt;,origin&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"1960-01-01"&lt;/span&gt;, tz&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;""&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,Latency&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;lat.av&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #7f9f7f;"&gt;#&lt;/span&gt;&lt;span style="color: #7f9f7f;"&gt;colnames(dfg) = c("Time","Latency","Count")&lt;/span&gt;
+g &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;ggplot&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;data&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;dfg,&lt;span style="color: #7a92d4;"&gt;aes&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;x&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;Time,y&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;Latency&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+g &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;geom_point&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;()&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;ggsave&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"quote-latency-averagecondensed.svg"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
 &lt;/pre&gt;
 &lt;/div&gt;
 
@@ -830,9 +830,9 @@ both trade and quote times.
 Now the bad news:
 &lt;/p&gt;
 &lt;ul class="org-ul"&gt;
-&lt;li&gt;iqfeed exists only as windows software 
+&lt;li&gt;iqfeed exists only as windows software
 &lt;/li&gt;
-&lt;li&gt;the process is hardwired to communicate via a tcp connection. 
+&lt;li&gt;the process is hardwired to communicate via a tcp connection.
 &lt;/li&gt;
 &lt;li&gt;the feed has a habit of going down several times a day so that there will
 be gaps in the event stream.
@@ -869,7 +869,7 @@ first being modelled using graphviz.  The current candidate system looks like th
 &lt;li&gt;there are two main one-way message passing routines that probably
 need to be very very fast (blue lines)
 &lt;/li&gt;
-&lt;li&gt;there is one read from database and one write to database (red lines) 
+&lt;li&gt;there is one read from database and one write to database (red lines)
 &lt;/li&gt;
 &lt;li&gt;every component registers to an observer component that records system
 state and dynamics (grey dotted).
@@ -908,7 +908,7 @@ rather than componentry.  One example of this is separation of complex
 event definitions from the statistical analysis once events are defined.
 &lt;/li&gt;
 &lt;li&gt;there is a focus on automation and machine learning.  As such there is no
-place for human interaction.  In particular, no visualization is required. 
+place for human interaction.  In particular, no visualization is required.
 &lt;/li&gt;
 &lt;li&gt;messaging between components can be the same general process.  The
 components can also be tested in exactly the same way (such as speed and
@@ -922,57 +922,57 @@ And here's the dot code:
 
 &lt;div class="org-src-container"&gt;
 
-&lt;pre class="src src-dot"&gt;digraph G {
-        node [label=&lt;span style="color: #cc9393;"&gt;"\N"&lt;/span&gt;];
-        node [style=filled, color=&lt;span style="color: #cc9393;"&gt;"#1f3950"&lt;/span&gt;,fontcolor=&lt;span style="color: #cc9393;"&gt;"#eeeeee"&lt;/span&gt;,shape=box]; 
-        subgraph cluster_market_data {
-                graph [label=&lt;span style="color: #cc9393;"&gt;"market data"&lt;/span&gt;, color=&lt;span style="color: #cc9393;"&gt;"#909090"&lt;/span&gt;];
-                exchange [shape=egg,color=&lt;span style="color: #cc9393;"&gt;"#ff111111"&lt;/span&gt;,fontcolor=&lt;span style="color: #cc9393;"&gt;"#101010"&lt;/span&gt;,label=&lt;span style="color: #cc9393;"&gt;"exchanges"&lt;/span&gt;];
-                aggregator [shape=egg,color=&lt;span style="color: #cc9393;"&gt;"#cc11cc22"&lt;/span&gt;,fontcolor=&lt;span style="color: #cc9393;"&gt;"#101010"&lt;/span&gt;,label=&lt;span style="color: #cc9393;"&gt;"data stream"&lt;/span&gt;];
-                localport [label=&lt;span style="color: #cc9393;"&gt;"local node"&lt;/span&gt;];
-                exchange -&amp;gt; aggregator [dir=none];
-                aggregator -&amp;gt; localport [dir=both];
+&lt;pre class="src src-dot"&gt;digraph &lt;span style="color: #8cd0d3;"&gt;G&lt;/span&gt; {
+        node [&lt;span style="color: #dfaf8f;"&gt;label=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"\N"&lt;/span&gt;];
+        node [&lt;span style="color: #dfaf8f;"&gt;style=&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;filled&lt;/span&gt;, &lt;span style="color: #dfaf8f;"&gt;color=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#1f3950"&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;fontcolor=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#eeeeee"&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;shape=&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;box&lt;/span&gt;];
+        subgraph &lt;span style="color: #8cd0d3;"&gt;cluster&lt;/span&gt;_market_data {
+                graph [&lt;span style="color: #dfaf8f;"&gt;label=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"market data"&lt;/span&gt;, &lt;span style="color: #dfaf8f;"&gt;color=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#909090"&lt;/span&gt;];
+                exchange [&lt;span style="color: #dfaf8f;"&gt;shape=&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;egg&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;color=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#ff111111"&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;fontcolor=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#101010"&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;label=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"exchanges"&lt;/span&gt;];
+                aggregator [&lt;span style="color: #dfaf8f;"&gt;shape=&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;egg&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;color=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#cc11cc22"&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;fontcolor=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#101010"&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;label=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"data stream"&lt;/span&gt;];
+                localport [&lt;span style="color: #dfaf8f;"&gt;label=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"local node"&lt;/span&gt;];
+                exchange -&amp;gt; aggregator [&lt;span style="color: #dfaf8f;"&gt;dir=&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;none&lt;/span&gt;];
+                aggregator -&amp;gt; localport [&lt;span style="color: #dfaf8f;"&gt;dir=&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;both&lt;/span&gt;];
         }
-        subgraph cluster_offwire {
-                graph [label=&lt;span style="color: #cc9393;"&gt;"offwire"&lt;/span&gt;,
-                        color=&lt;span style="color: #cc9393;"&gt;"#909090"&lt;/span&gt;];
-                offwirealgo [label=&lt;span style="color: #cc9393;"&gt;"offline algo"&lt;/span&gt;];
+        subgraph &lt;span style="color: #8cd0d3;"&gt;cluster&lt;/span&gt;_offwire {
+                graph [&lt;span style="color: #dfaf8f;"&gt;label=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"offwire"&lt;/span&gt;,
+                        &lt;span style="color: #dfaf8f;"&gt;color=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#909090"&lt;/span&gt;];
+                offwirealgo [&lt;span style="color: #dfaf8f;"&gt;label=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"offline algo"&lt;/span&gt;];
                 observer;
                 databases;
-                observer -&amp;gt; databases [color=red,label=&lt;span style="color: #cc9393;"&gt;"write"&lt;/span&gt;,fontcolor=red];
+                observer -&amp;gt; databases [&lt;span style="color: #dfaf8f;"&gt;color=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;red&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;label=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"write"&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;fontcolor=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;red&lt;/span&gt;];
         }
-        subgraph cluster_onwire {
-                graph [label=&lt;span style="color: #cc9393;"&gt;"onwire"&lt;/span&gt;,
-                        color=&lt;span style="color: #cc9393;"&gt;"#909090"&lt;/span&gt;];
-                node [style=filled];
-                disruptor [label=&lt;span style="color: #cc9393;"&gt;"event server"&lt;/span&gt;];
-                eventalgo [label=&lt;span style="color: #cc9393;"&gt;"algo"&lt;/span&gt;];
+        subgraph &lt;span style="color: #8cd0d3;"&gt;cluster&lt;/span&gt;_onwire {
+                graph [&lt;span style="color: #dfaf8f;"&gt;label=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"onwire"&lt;/span&gt;,
+                        &lt;span style="color: #dfaf8f;"&gt;color=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#909090"&lt;/span&gt;];
+                node [&lt;span style="color: #dfaf8f;"&gt;style=&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;filled&lt;/span&gt;];
+                disruptor [&lt;span style="color: #dfaf8f;"&gt;label=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"event server"&lt;/span&gt;];
+                eventalgo [&lt;span style="color: #dfaf8f;"&gt;label=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"algo"&lt;/span&gt;];
                 controller;
-                controller -&amp;gt; eventalgo [color=&lt;span style="color: #cc9393;"&gt;"#aaaaaa"&lt;/span&gt;,dir=both]
+                controller -&amp;gt; eventalgo [&lt;span style="color: #dfaf8f;"&gt;color=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#aaaaaa"&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;dir=&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;both&lt;/span&gt;]
                 disruptor -&amp;gt; listener;
                 disruptor -&amp;gt; eventalgo;
                 disruptor -&amp;gt; controller;
-                controller -&amp;gt; disruptor [color=&lt;span style="color: #cc9393;"&gt;"#0080ff"&lt;/span&gt;];
+                controller -&amp;gt; disruptor [&lt;span style="color: #dfaf8f;"&gt;color=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#0080ff"&lt;/span&gt;];
         }
-        subgraph cluster_broker {
-                graph [label=&lt;span style="color: #cc9393;"&gt;"broker data"&lt;/span&gt;,
-                        color=&lt;span style="color: #cc9393;"&gt;"#909090"&lt;/span&gt;];
-                broker [shape=egg,color=&lt;span style="color: #cc9393;"&gt;"#ff111111"&lt;/span&gt;,fontcolor=&lt;span style="color: #cc9393;"&gt;"#101010"&lt;/span&gt;,label=&lt;span style="color: #cc9393;"&gt;"brokers"&lt;/span&gt;];
-                brokeraggregator [shape=egg,color=&lt;span style="color: #cc9393;"&gt;"#cc11cc22"&lt;/span&gt;,fontcolor=&lt;span style="color: #cc9393;"&gt;"#101010"&lt;/span&gt;,label=&lt;span style="color: #cc9393;"&gt;"aggregation"&lt;/span&gt;];
-                broker -&amp;gt; brokeraggregator [dir=none];
-                brokeraggregator -&amp;gt; trader [dir=both];
+        subgraph &lt;span style="color: #8cd0d3;"&gt;cluster&lt;/span&gt;_broker {
+                graph [&lt;span style="color: #dfaf8f;"&gt;label=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"broker data"&lt;/span&gt;,
+                        &lt;span style="color: #dfaf8f;"&gt;color=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#909090"&lt;/span&gt;];
+                broker [&lt;span style="color: #dfaf8f;"&gt;shape=&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;egg&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;color=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#ff111111"&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;fontcolor=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#101010"&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;label=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"brokers"&lt;/span&gt;];
+                brokeraggregator [&lt;span style="color: #dfaf8f;"&gt;shape=&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;egg&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;color=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#cc11cc22"&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;fontcolor=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#101010"&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;label=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"aggregation"&lt;/span&gt;];
+                broker -&amp;gt; brokeraggregator [&lt;span style="color: #dfaf8f;"&gt;dir=&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;none&lt;/span&gt;];
+                brokeraggregator -&amp;gt; trader [&lt;span style="color: #dfaf8f;"&gt;dir=&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;both&lt;/span&gt;];
         }
-        localport -&amp;gt; observer [color=&lt;span style="color: #cc9393;"&gt;"#aaaaaa"&lt;/span&gt;,style=dotted];
-        controller -&amp;gt; localport [color=&lt;span style="color: #cc9393;"&gt;"#aaaaaa"&lt;/span&gt;];
-        localport -&amp;gt; disruptor [color=&lt;span style="color: #cc9393;"&gt;"#0080ff"&lt;/span&gt;];
-        listener -&amp;gt; observer [color=&lt;span style="color: #cc9393;"&gt;"#aaaaaa"&lt;/span&gt;,style=dotted];
-        controller -&amp;gt; observer [color=&lt;span style="color: #cc9393;"&gt;"#aaaaaa"&lt;/span&gt;,style=dotted];
-        controller -&amp;gt; trader [color=&lt;span style="color: #cc9393;"&gt;"#aaaaaa"&lt;/span&gt;,dir=both];
-        controller -&amp;gt; offwirealgo [color=&lt;span style="color: #cc9393;"&gt;"#aaaaaa"&lt;/span&gt;,dir=both];
-        databases -&amp;gt; offwirealgo [color=red,label=&lt;span style="color: #cc9393;"&gt;"read"&lt;/span&gt;,fontcolor=red];
-        trader -&amp;gt; observer [color=&lt;span style="color: #cc9393;"&gt;"#aaaaaa"&lt;/span&gt;,style=dotted];
-        eventalgo -&amp;gt; observer [color=&lt;span style="color: #cc9393;"&gt;"#aaaaaa"&lt;/span&gt;,style=dotted];
-        offwirealgo -&amp;gt; observer [color=&lt;span style="color: #cc9393;"&gt;"#aaaaaa"&lt;/span&gt;,style=dotted];
+        localport -&amp;gt; observer [&lt;span style="color: #dfaf8f;"&gt;color=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#aaaaaa"&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;style=&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;dotted&lt;/span&gt;];
+        controller -&amp;gt; localport [&lt;span style="color: #dfaf8f;"&gt;color=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#aaaaaa"&lt;/span&gt;];
+        localport -&amp;gt; disruptor [&lt;span style="color: #dfaf8f;"&gt;color=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#0080ff"&lt;/span&gt;];
+        listener -&amp;gt; observer [&lt;span style="color: #dfaf8f;"&gt;color=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#aaaaaa"&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;style=&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;dotted&lt;/span&gt;];
+        controller -&amp;gt; observer [&lt;span style="color: #dfaf8f;"&gt;color=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#aaaaaa"&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;style=&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;dotted&lt;/span&gt;];
+        controller -&amp;gt; trader [&lt;span style="color: #dfaf8f;"&gt;color=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#aaaaaa"&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;dir=&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;both&lt;/span&gt;];
+        controller -&amp;gt; offwirealgo [&lt;span style="color: #dfaf8f;"&gt;color=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#aaaaaa"&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;dir=&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;both&lt;/span&gt;];
+        databases -&amp;gt; offwirealgo [&lt;span style="color: #dfaf8f;"&gt;color=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;red&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;label=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"read"&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;fontcolor=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;red&lt;/span&gt;];
+        trader -&amp;gt; observer [&lt;span style="color: #dfaf8f;"&gt;color=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#aaaaaa"&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;style=&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;dotted&lt;/span&gt;];
+        eventalgo -&amp;gt; observer [&lt;span style="color: #dfaf8f;"&gt;color=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#aaaaaa"&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;style=&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;dotted&lt;/span&gt;];
+        offwirealgo -&amp;gt; observer [&lt;span style="color: #dfaf8f;"&gt;color=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#aaaaaa"&lt;/span&gt;,&lt;span style="color: #dfaf8f;"&gt;style=&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;dotted&lt;/span&gt;];
 }
 &lt;/pre&gt;
 &lt;/div&gt;
@@ -989,7 +989,7 @@ be a reporting front-end in a production environment.
 
 &lt;div class="org-src-container"&gt;
 
-&lt;pre class="src src-haskell"&gt;&lt;span style="color: #f0dfaf; font-weight: bold;"&gt;module&lt;/span&gt; &lt;span style="color: #8cd0d3; background-color: #3f3f3f;"&gt;ControllerTest&lt;/span&gt;&lt;span style="color: #cc9393; background-color: #3f3f3f;"&gt; &lt;/span&gt;
+&lt;pre class="src src-haskell"&gt;&lt;span style="color: #f0dfaf; font-weight: bold;"&gt;module&lt;/span&gt; &lt;span style="color: #8cd0d3; background-color: #3f3f3f;"&gt;ControllerTest&lt;/span&gt;
 ( importDotFile
 , importDot
 , printGraph
@@ -1005,7 +1005,7 @@ be a reporting front-end in a production environment.
 
 &lt;span style="color: #8cd0d3;"&gt;importDotFile&lt;/span&gt; &lt;span style="color: #dfaf8f;"&gt;::&lt;/span&gt; &lt;span style="color: #8cd0d3; background-color: #3f3f3f;"&gt;FilePath&lt;/span&gt; &lt;span style="color: #dfaf8f;"&gt;-&amp;gt;&lt;/span&gt; &lt;span style="color: #8cd0d3; background-color: #3f3f3f;"&gt;IO&lt;/span&gt; (&lt;span style="color: #8cd0d3; background-color: #3f3f3f;"&gt;G.DotGraph&lt;/span&gt; &lt;span style="color: #8cd0d3; background-color: #3f3f3f;"&gt;String&lt;/span&gt;)
 &lt;span style="color: #8cd0d3;"&gt;importDotFile&lt;/span&gt; f &lt;span style="color: #dfaf8f;"&gt;=&lt;/span&gt; &lt;span style="color: #f0dfaf; font-weight: bold;"&gt;do&lt;/span&gt;
-        dotText &lt;span style="color: #dfaf8f;"&gt;&amp;lt;-&lt;/span&gt; &lt;span style="color: #8cd0d3; background-color: #3f3f3f;"&gt;I&lt;/span&gt;&lt;span style="color: #dfaf8f;"&gt;.&lt;/span&gt;readFile f&lt;span style="color: #cc9393; background-color: #3f3f3f;"&gt; &lt;/span&gt;
+        dotText &lt;span style="color: #dfaf8f;"&gt;&amp;lt;-&lt;/span&gt; &lt;span style="color: #8cd0d3; background-color: #3f3f3f;"&gt;I&lt;/span&gt;&lt;span style="color: #dfaf8f;"&gt;.&lt;/span&gt;readFile f
         return &lt;span style="color: #dfaf8f;"&gt;$&lt;/span&gt; parseDotGraph dotText
 
 &lt;span style="color: #8cd0d3;"&gt;importDot&lt;/span&gt; &lt;span style="color: #dfaf8f;"&gt;::&lt;/span&gt; &lt;span style="color: #8cd0d3; background-color: #3f3f3f;"&gt;L.Text&lt;/span&gt; &lt;span style="color: #dfaf8f;"&gt;-&amp;gt;&lt;/span&gt; &lt;span style="color: #8cd0d3; background-color: #3f3f3f;"&gt;G.DotGraph&lt;/span&gt; &lt;span style="color: #8cd0d3; background-color: #3f3f3f;"&gt;Node&lt;/span&gt;

@@ -73,18 +73,18 @@
 
 
 <li><a href="../blog/statistical-forecasting.html">Statistical Forecasting</a></li><li><a href="../blog/latency-research.html">Latency Research</a></li><li><a href="../blog/market-feed-selection.html">Market Feed Selection</a></li><li><a href="../blog/candidate-structure.html">Candidate Structure</a></li>
-         
+
   </ul>
-  
+
   </li>
   <li><a href="https://github.com/tonyday567/hft"><i>icon-github icon-white</i> HFT</a>
-  
+
   </li>
   <li><a href="../tags.html"><i>icon-tags icon-white</i> Tags</a>
-  
+
   </li>
   <li><a href="../archives.html"><i>icon-list icon-white</i> Archives</a>
-  
+
   </li>
   <li><a href="../index.xml"><i>icon-rss icon-white</i> RSS</a>
   </li>
@@ -153,7 +153,7 @@ first being modelled using graphviz.  The current candidate system looks like th
 <li>there are two main one-way message passing routines that probably
 need to be very very fast (blue lines)
 </li>
-<li>there is one read from database and one write to database (red lines) 
+<li>there is one read from database and one write to database (red lines)
 </li>
 <li>every component registers to an observer component that records system
 state and dynamics (grey dotted).
@@ -192,7 +192,7 @@ rather than componentry.  One example of this is separation of complex
 event definitions from the statistical analysis once events are defined.
 </li>
 <li>there is a focus on automation and machine learning.  As such there is no
-place for human interaction.  In particular, no visualization is required. 
+place for human interaction.  In particular, no visualization is required.
 </li>
 <li>messaging between components can be the same general process.  The
 components can also be tested in exactly the same way (such as speed and
@@ -206,57 +206,57 @@ And here's the dot code:
 
 <div class="org-src-container">
 
-<pre class="src src-dot">digraph G {
-        node [label=<span style="color: #cc9393;">"\N"</span>];
-        node [style=filled, color=<span style="color: #cc9393;">"#1f3950"</span>,fontcolor=<span style="color: #cc9393;">"#eeeeee"</span>,shape=box]; 
-        subgraph cluster_market_data {
-                graph [label=<span style="color: #cc9393;">"market data"</span>, color=<span style="color: #cc9393;">"#909090"</span>];
-                exchange [shape=egg,color=<span style="color: #cc9393;">"#ff111111"</span>,fontcolor=<span style="color: #cc9393;">"#101010"</span>,label=<span style="color: #cc9393;">"exchanges"</span>];
-                aggregator [shape=egg,color=<span style="color: #cc9393;">"#cc11cc22"</span>,fontcolor=<span style="color: #cc9393;">"#101010"</span>,label=<span style="color: #cc9393;">"data stream"</span>];
-                localport [label=<span style="color: #cc9393;">"local node"</span>];
-                exchange -&gt; aggregator [dir=none];
-                aggregator -&gt; localport [dir=both];
+<pre class="src src-dot">digraph <span style="color: #8cd0d3;">G</span> {
+        node [<span style="color: #dfaf8f;">label=</span><span style="color: #cc9393;">"\N"</span>];
+        node [<span style="color: #dfaf8f;">style=</span><span style="color: #b9a16c;">filled</span>, <span style="color: #dfaf8f;">color=</span><span style="color: #cc9393;">"#1f3950"</span>,<span style="color: #dfaf8f;">fontcolor=</span><span style="color: #cc9393;">"#eeeeee"</span>,<span style="color: #dfaf8f;">shape=</span><span style="color: #b9a16c;">box</span>];
+        subgraph <span style="color: #8cd0d3;">cluster</span>_market_data {
+                graph [<span style="color: #dfaf8f;">label=</span><span style="color: #cc9393;">"market data"</span>, <span style="color: #dfaf8f;">color=</span><span style="color: #cc9393;">"#909090"</span>];
+                exchange [<span style="color: #dfaf8f;">shape=</span><span style="color: #b9a16c;">egg</span>,<span style="color: #dfaf8f;">color=</span><span style="color: #cc9393;">"#ff111111"</span>,<span style="color: #dfaf8f;">fontcolor=</span><span style="color: #cc9393;">"#101010"</span>,<span style="color: #dfaf8f;">label=</span><span style="color: #cc9393;">"exchanges"</span>];
+                aggregator [<span style="color: #dfaf8f;">shape=</span><span style="color: #b9a16c;">egg</span>,<span style="color: #dfaf8f;">color=</span><span style="color: #cc9393;">"#cc11cc22"</span>,<span style="color: #dfaf8f;">fontcolor=</span><span style="color: #cc9393;">"#101010"</span>,<span style="color: #dfaf8f;">label=</span><span style="color: #cc9393;">"data stream"</span>];
+                localport [<span style="color: #dfaf8f;">label=</span><span style="color: #cc9393;">"local node"</span>];
+                exchange -&gt; aggregator [<span style="color: #dfaf8f;">dir=</span><span style="color: #b9a16c;">none</span>];
+                aggregator -&gt; localport [<span style="color: #dfaf8f;">dir=</span><span style="color: #b9a16c;">both</span>];
         }
-        subgraph cluster_offwire {
-                graph [label=<span style="color: #cc9393;">"offwire"</span>,
-                        color=<span style="color: #cc9393;">"#909090"</span>];
-                offwirealgo [label=<span style="color: #cc9393;">"offline algo"</span>];
+        subgraph <span style="color: #8cd0d3;">cluster</span>_offwire {
+                graph [<span style="color: #dfaf8f;">label=</span><span style="color: #cc9393;">"offwire"</span>,
+                        <span style="color: #dfaf8f;">color=</span><span style="color: #cc9393;">"#909090"</span>];
+                offwirealgo [<span style="color: #dfaf8f;">label=</span><span style="color: #cc9393;">"offline algo"</span>];
                 observer;
                 databases;
-                observer -&gt; databases [color=red,label=<span style="color: #cc9393;">"write"</span>,fontcolor=red];
+                observer -&gt; databases [<span style="color: #dfaf8f;">color=</span><span style="color: #cc9393;">red</span>,<span style="color: #dfaf8f;">label=</span><span style="color: #cc9393;">"write"</span>,<span style="color: #dfaf8f;">fontcolor=</span><span style="color: #cc9393;">red</span>];
         }
-        subgraph cluster_onwire {
-                graph [label=<span style="color: #cc9393;">"onwire"</span>,
-                        color=<span style="color: #cc9393;">"#909090"</span>];
-                node [style=filled];
-                disruptor [label=<span style="color: #cc9393;">"event server"</span>];
-                eventalgo [label=<span style="color: #cc9393;">"algo"</span>];
+        subgraph <span style="color: #8cd0d3;">cluster</span>_onwire {
+                graph [<span style="color: #dfaf8f;">label=</span><span style="color: #cc9393;">"onwire"</span>,
+                        <span style="color: #dfaf8f;">color=</span><span style="color: #cc9393;">"#909090"</span>];
+                node [<span style="color: #dfaf8f;">style=</span><span style="color: #b9a16c;">filled</span>];
+                disruptor [<span style="color: #dfaf8f;">label=</span><span style="color: #cc9393;">"event server"</span>];
+                eventalgo [<span style="color: #dfaf8f;">label=</span><span style="color: #cc9393;">"algo"</span>];
                 controller;
-                controller -&gt; eventalgo [color=<span style="color: #cc9393;">"#aaaaaa"</span>,dir=both]
+                controller -&gt; eventalgo [<span style="color: #dfaf8f;">color=</span><span style="color: #cc9393;">"#aaaaaa"</span>,<span style="color: #dfaf8f;">dir=</span><span style="color: #b9a16c;">both</span>]
                 disruptor -&gt; listener;
                 disruptor -&gt; eventalgo;
                 disruptor -&gt; controller;
-                controller -&gt; disruptor [color=<span style="color: #cc9393;">"#0080ff"</span>];
+                controller -&gt; disruptor [<span style="color: #dfaf8f;">color=</span><span style="color: #cc9393;">"#0080ff"</span>];
         }
-        subgraph cluster_broker {
-                graph [label=<span style="color: #cc9393;">"broker data"</span>,
-                        color=<span style="color: #cc9393;">"#909090"</span>];
-                broker [shape=egg,color=<span style="color: #cc9393;">"#ff111111"</span>,fontcolor=<span style="color: #cc9393;">"#101010"</span>,label=<span style="color: #cc9393;">"brokers"</span>];
-                brokeraggregator [shape=egg,color=<span style="color: #cc9393;">"#cc11cc22"</span>,fontcolor=<span style="color: #cc9393;">"#101010"</span>,label=<span style="color: #cc9393;">"aggregation"</span>];
-                broker -&gt; brokeraggregator [dir=none];
-                brokeraggregator -&gt; trader [dir=both];
+        subgraph <span style="color: #8cd0d3;">cluster</span>_broker {
+                graph [<span style="color: #dfaf8f;">label=</span><span style="color: #cc9393;">"broker data"</span>,
+                        <span style="color: #dfaf8f;">color=</span><span style="color: #cc9393;">"#909090"</span>];
+                broker [<span style="color: #dfaf8f;">shape=</span><span style="color: #b9a16c;">egg</span>,<span style="color: #dfaf8f;">color=</span><span style="color: #cc9393;">"#ff111111"</span>,<span style="color: #dfaf8f;">fontcolor=</span><span style="color: #cc9393;">"#101010"</span>,<span style="color: #dfaf8f;">label=</span><span style="color: #cc9393;">"brokers"</span>];
+                brokeraggregator [<span style="color: #dfaf8f;">shape=</span><span style="color: #b9a16c;">egg</span>,<span style="color: #dfaf8f;">color=</span><span style="color: #cc9393;">"#cc11cc22"</span>,<span style="color: #dfaf8f;">fontcolor=</span><span style="color: #cc9393;">"#101010"</span>,<span style="color: #dfaf8f;">label=</span><span style="color: #cc9393;">"aggregation"</span>];
+                broker -&gt; brokeraggregator [<span style="color: #dfaf8f;">dir=</span><span style="color: #b9a16c;">none</span>];
+                brokeraggregator -&gt; trader [<span style="color: #dfaf8f;">dir=</span><span style="color: #b9a16c;">both</span>];
         }
-        localport -&gt; observer [color=<span style="color: #cc9393;">"#aaaaaa"</span>,style=dotted];
-        controller -&gt; localport [color=<span style="color: #cc9393;">"#aaaaaa"</span>];
-        localport -&gt; disruptor [color=<span style="color: #cc9393;">"#0080ff"</span>];
-        listener -&gt; observer [color=<span style="color: #cc9393;">"#aaaaaa"</span>,style=dotted];
-        controller -&gt; observer [color=<span style="color: #cc9393;">"#aaaaaa"</span>,style=dotted];
-        controller -&gt; trader [color=<span style="color: #cc9393;">"#aaaaaa"</span>,dir=both];
-        controller -&gt; offwirealgo [color=<span style="color: #cc9393;">"#aaaaaa"</span>,dir=both];
-        databases -&gt; offwirealgo [color=red,label=<span style="color: #cc9393;">"read"</span>,fontcolor=red];
-        trader -&gt; observer [color=<span style="color: #cc9393;">"#aaaaaa"</span>,style=dotted];
-        eventalgo -&gt; observer [color=<span style="color: #cc9393;">"#aaaaaa"</span>,style=dotted];
-        offwirealgo -&gt; observer [color=<span style="color: #cc9393;">"#aaaaaa"</span>,style=dotted];
+        localport -&gt; observer [<span style="color: #dfaf8f;">color=</span><span style="color: #cc9393;">"#aaaaaa"</span>,<span style="color: #dfaf8f;">style=</span><span style="color: #b9a16c;">dotted</span>];
+        controller -&gt; localport [<span style="color: #dfaf8f;">color=</span><span style="color: #cc9393;">"#aaaaaa"</span>];
+        localport -&gt; disruptor [<span style="color: #dfaf8f;">color=</span><span style="color: #cc9393;">"#0080ff"</span>];
+        listener -&gt; observer [<span style="color: #dfaf8f;">color=</span><span style="color: #cc9393;">"#aaaaaa"</span>,<span style="color: #dfaf8f;">style=</span><span style="color: #b9a16c;">dotted</span>];
+        controller -&gt; observer [<span style="color: #dfaf8f;">color=</span><span style="color: #cc9393;">"#aaaaaa"</span>,<span style="color: #dfaf8f;">style=</span><span style="color: #b9a16c;">dotted</span>];
+        controller -&gt; trader [<span style="color: #dfaf8f;">color=</span><span style="color: #cc9393;">"#aaaaaa"</span>,<span style="color: #dfaf8f;">dir=</span><span style="color: #b9a16c;">both</span>];
+        controller -&gt; offwirealgo [<span style="color: #dfaf8f;">color=</span><span style="color: #cc9393;">"#aaaaaa"</span>,<span style="color: #dfaf8f;">dir=</span><span style="color: #b9a16c;">both</span>];
+        databases -&gt; offwirealgo [<span style="color: #dfaf8f;">color=</span><span style="color: #cc9393;">red</span>,<span style="color: #dfaf8f;">label=</span><span style="color: #cc9393;">"read"</span>,<span style="color: #dfaf8f;">fontcolor=</span><span style="color: #cc9393;">red</span>];
+        trader -&gt; observer [<span style="color: #dfaf8f;">color=</span><span style="color: #cc9393;">"#aaaaaa"</span>,<span style="color: #dfaf8f;">style=</span><span style="color: #b9a16c;">dotted</span>];
+        eventalgo -&gt; observer [<span style="color: #dfaf8f;">color=</span><span style="color: #cc9393;">"#aaaaaa"</span>,<span style="color: #dfaf8f;">style=</span><span style="color: #b9a16c;">dotted</span>];
+        offwirealgo -&gt; observer [<span style="color: #dfaf8f;">color=</span><span style="color: #cc9393;">"#aaaaaa"</span>,<span style="color: #dfaf8f;">style=</span><span style="color: #b9a16c;">dotted</span>];
 }
 </pre>
 </div>
@@ -273,7 +273,7 @@ be a reporting front-end in a production environment.
 
 <div class="org-src-container">
 
-<pre class="src src-haskell"><span style="color: #f0dfaf; font-weight: bold;">module</span> <span style="color: #8cd0d3; background-color: #3f3f3f;">ControllerTest</span><span style="color: #cc9393; background-color: #3f3f3f;"> </span>
+<pre class="src src-haskell"><span style="color: #f0dfaf; font-weight: bold;">module</span> <span style="color: #8cd0d3; background-color: #3f3f3f;">ControllerTest</span>
 ( importDotFile
 , importDot
 , printGraph
@@ -289,7 +289,7 @@ be a reporting front-end in a production environment.
 
 <span style="color: #8cd0d3;">importDotFile</span> <span style="color: #dfaf8f;">::</span> <span style="color: #8cd0d3; background-color: #3f3f3f;">FilePath</span> <span style="color: #dfaf8f;">-&gt;</span> <span style="color: #8cd0d3; background-color: #3f3f3f;">IO</span> (<span style="color: #8cd0d3; background-color: #3f3f3f;">G.DotGraph</span> <span style="color: #8cd0d3; background-color: #3f3f3f;">String</span>)
 <span style="color: #8cd0d3;">importDotFile</span> f <span style="color: #dfaf8f;">=</span> <span style="color: #f0dfaf; font-weight: bold;">do</span>
-        dotText <span style="color: #dfaf8f;">&lt;-</span> <span style="color: #8cd0d3; background-color: #3f3f3f;">I</span><span style="color: #dfaf8f;">.</span>readFile f<span style="color: #cc9393; background-color: #3f3f3f;"> </span>
+        dotText <span style="color: #dfaf8f;">&lt;-</span> <span style="color: #8cd0d3; background-color: #3f3f3f;">I</span><span style="color: #dfaf8f;">.</span>readFile f
         return <span style="color: #dfaf8f;">$</span> parseDotGraph dotText
 
 <span style="color: #8cd0d3;">importDot</span> <span style="color: #dfaf8f;">::</span> <span style="color: #8cd0d3; background-color: #3f3f3f;">L.Text</span> <span style="color: #dfaf8f;">-&gt;</span> <span style="color: #8cd0d3; background-color: #3f3f3f;">G.DotGraph</span> <span style="color: #8cd0d3; background-color: #3f3f3f;">Node</span>
