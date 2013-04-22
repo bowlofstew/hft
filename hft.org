@@ -2062,269 +2062,6 @@ There's a few hypotheses guilding the evolution of the algorithm design:
   rather than raw speed.
 
 
-** generalised statistical forecasting
-
-A bewildering, seemingly infinite number of approaches exist for statistical
-forecasting of returns. An early mistake made in this choice can doom an
-algorithmic approach to trading (whether high-frequency or low) from the very
-beginning of the hunt.
-
-My experience, however, is that many seemingly disparate techniques are, in
-fact, the same basic calculation of simple statistics with varying parameters
-and restrictions of the solution space.
-
-*** the moving average
-
-*Simple Moving Average (SMA)*
-
-The workhorse of technical market analytics is the moving average. As an
-example, the simplest and most famous technical signal is the 20-day moving
-average of price.  When the price falls below the moving average sell, and
-when it moves above the average, buy.  Reaching for my latex cheat sheet:
-
-\begin{multline}
-signal = price_{0} - \frac{\sum\limits_{i=0}^{19}price_{i}}{20}
-\end{multline}
-
-where $price_{0}$ is current price (as at a close say) and $price_{19}$ the price 19 days ago.
-
-Rearranging:
-
-\begin{multline}
-signal = \left( \begin{array}{c} 0.95 & -0.05 & ... & -0.05 \end{array} \right) \ast \left( \begin{array}{c} p_{0} & p_{1} & ... & p_{19} \end{array} \right)
-\end{multline}
-
-So the signal can be expressed as a weighted sum of price where the weights add to zero.
-
-
-Moving on to the next most popular moving average crossover, let's look at the
-signal from that results from using the 100 day average crossing the 20 day
-average (120 actually but I'm making the maths easy):
-
-\begin{equation}
-\begin{split}
-signal &= \frac{\sum\limits_{i=0}^{19}price_{-i}}{20} - \frac{\sum\limits_{i=0}^{99}price_{-i}}{100} \\
-&= \left( \begin{array}{cccc} 0.04 & 0.04 & ... & -0.01 & ... & -0.01 \end{array} \right) \ast \left( \begin{array}{c} p_{0} & p_{1} & ... & p_{20} & ... & p_{99} \end{array} \right)
-\end{split}
-\end{equation}
-
-
-*Exponential Moving Average (EMA)*
-
-An exponential moving average adopts a weighting scheme where the weight
-geometrically =decays= at a constant rate of $(1 - \frac{1}{days})$ the further back in time
-you go. Price crossing a 10-day EMA signal looks like:
-
-\begin{equation}
-\begin{split}
-signal &= price_{0} - \frac{\sum\limits_{i=0}^{\infty}0.9^{i} \ast price_{i}}{10} \\
-&= \left( \begin{array}{c} 0.9 & -0.09 & -0.081 & ... \end{array} \right) \ast \left( \begin{array}{c} p_{0} & p_{1} & p_{2} & ...  \end{array} \right)
-\end{split}
-\end{equation}
-
-So, no matter how many different moving average rules are combined, nor the alternative
-ways of specifying a moving average, moving average signal rules all boil down to a weighted sum
-calculation of price.
-
-\begin{multline}
-signal = \sum\limits_{i=0}^{n}(k_{i} \ast price_{i})
-\end{multline}
-
-where $k_{i}$ are weights adding to zero.
-
-*return-based signals*
-
-A signal based on historical prices can also be expressed in terms of
-historical returns given:
-
-\begin{multline}
-1 + return_{n} = \frac{price_{n}}{price_{(n-1)}}
-\end{multline}
-
-and thus
-
-\begin{multline}
-\frac{price_{0}}{price_{n}} =
-\end{multline}
-\begin{multline}
-\frac{price_{0}}{price_{1}} \ast \frac{price_{1}}{price_{2}} \ast \cdots \ast \frac{price_{(n-1)}}{price_{n}} =
-\end{multline}
-\begin{multline}
-\prod\limits_{i=0}^{n-1}(1+return_{i}) \approxeq
-\end{multline}
-\begin{multline}
-1 + return_{0} + return_{1} + \cdots + return_{n-1}
-\end{multline}
-(dropping the insignificant terms from the taylor series expansion)
-
-
-Now being a generic signal, you can divide by anything you want and it's still
-a signal.  Dividing by $price_{19}$ (I'm making the maths easier) gives:
-
-\begin{multline}
-(k_{0} \ast \frac{price_{0}}{price{19}}) + (k_{1} \ast \frac{price_{1}}{price{19}}) + \cdots + (k_{19} \ast \frac{price_{19}}{price_{19}}
-\end{multline}
-\begin{multline}
-(k_{0} \ast (1 + return_{0} + ... + return_{19}) + (k_{1} \ast (1 + return_{1} + ... + return_{19}) + \cdots + (k_{19} \ast 1
-\end{multline}
-\begin{multline}
-(\sum\limits\_0^19k_{i}) + k_{0} \ast return_{0} + (k_{0} +k_{1}) \ast return_{1} + ... + \sum\limits\_0^19k_{i} \ast return_{19}
-\end{multline}
-
-The first term (sum of weights) is zero, so for our first price MA example
-[SMA(20)] looks like this in return terms:
-
-\begin{multline}
-signal = 0.95 \ast return_{0} + 0.9 \ast return_{1} + ... + 0.05 \ast return_{19}
-\end{multline}
-
-So a price moving average signal is the same as a return moving average where
-weights decline by 0.05 each time period (simple =decay=).
-
-Before we leave technicals, it might be useful to show the EMA(10) example as
-a code snippet (and with a few practical tweaks) compared to the SMA(20) from
-the previous example:
-
-*R code*
-#+begin_src R :results graphics :file rweights.png :exports both
-  k.weights
-  max.n = 20
-  days = 10
-  k.weights = -(1-(1/days))^(0:(max.n-1))/days # the ema weights
-  k.weights[1] = 1 + k.weights[1] # the current price
-  k.weights = k.weights/sum(k.weights) # normalising to sum=1 because we capped the length
-  ema.weights = cumsum(k.weights)
-  ema.weights = ema.weights/sum(ema.weights) # normalising so sum=1
-  sma.weights = seq(0.95,0.00,by=-0.05)/sum(seq(0.95,0.00,by=-0.05))
-  require(reshape)
-  require(ggplot2)
-  df.long = melt(data.frame(ema.weights,sma.weights,time=0:(max.n-1)),id="time")
-  g = ggplot(data=df.long,
-	 aes(x=time, y=value,color=variable)) +
-    geom_line()
-#+end_src
-
-
-*** momentum signals
-
-Momentum in standard finance literature is defined like this:
-
-#+begin_quote
-  When the return over the last 12 months is negative, go short the market, otherwise stay long
-#+end_quote
-
-Assuming there are 250 trading days in a year gives:
-
-\begin{multline}
-signal = \sum\limits_{i=0}^{249}return_{i}
-\end{multline}
-\begin{multline}
-signal = 1 \ast return_{0} + 1 \ast return_{1} + ... + 1 \ast return_{249}
-\end{multline}
-
-
-The weights are different and the signal uses a longer series but the
-underlying formulae structure is exactly the same.
-
-*** volatility
-
-The volatility of a return series is calculated as (20 day series say which
-would be broadly comparable to the VIX):
-
-\begin{multline}
-standard deviation estimate = \sqrt(0.05 * (return_{0} - average return)^{2} + 0.05 * (return_{1} - average return)^{2} + ... + 0.05 * (return_{19} - average return)^{2})
-\end{multline}
-
-Now one problem with statistical analysis of time series that standard fiaince
-is all over is that this is often a bad estimate of underlying volatility, because
-volatility is auto-conditional (future volatility is highly dependent on
-recent historical volatility).
-
-To deal with this, the workhorse of standard finance historical volatility
-analysis is the GARCH model. This note is getting quite long so I wont bore
-with the details but the guts of the model /uses an exponential weighting
-scheme/ to calculate volatility in a manner spookily like the EMA
-calculations in return space.
-
-\begin{multline}
-standard deviation estimate = \sqrt(0.09 * (return_{0} - average return)^{2} + 0.081 * (return_{1} - average return)^{2} + ...)
-\end{multline}
-
-Same as the standard volatility calculation but with a different weighting
-scheme.
-
-Now, one more trick and I'll get to the main point. The average return in the
-volatility equation is there as an estimate of the underlying mean return.
-Much of technical analysis and momentum research is actually alternative
-specifications of a useful expected return approximation (once you constrain
-the weights to add up to 1). We can thus insert our weighted return formulae
-in the volatility formulae:
-
-\begin{multline}
-return estimate = \sqrt(0.09 * return_{0} + 0.081 * return_{1} + ...) \\
-volatility estimate = \sqrt(0.09 * (return_{0} - return estimate)^{2} + 0.081 * (return_{1} - return estimate)^{2} + ...)
-\end{multline}
-(the weighting schemes don't have to be the same)
-
-*** weighted.historicals
-
-The function below applies these calculations to an historical time series
-where =hist.weights$mean= are the return weights and =hist.weights$vol= are the
-volatility weights.
-
-#+begin_src R :results silent
-  weighted.historicals = function(rets, hist.weights) {
-    hmean=as.double(filter(rets,hist.weights$mean,sides=1))
-    hmean[1:length(hist.weights$mean)]=cumsum(rets[1:length(hist.weights$mean)]*t(as.matrix(hist.weights$mean)))
-    xvol=(rets-hmean)^2
-    hvol=as.double(filter(xvol,hist.weights$vol,sides=1))^0.5
-    hvol[1:length(hist.weights$vol)]=cumsum(xvol[length(hist.weights$vol)]*t(as.matrix(hist.weights$vol)))^0.5
-    weighted.historicals=data.frame(hmean=hmean, hvol=hvol)
-  }
-#+end_src
-
-*** the point
-
-This function encapsulates a very broad church of finance theory concerned
-with forecasting future returns. Trend following and reversions, breakouts,
-technical analysis, bollinger bands, momentum theory, stochastic volatility,
-tweaks to option pricing, copulas (by extending the reasoning to correlations)
-and many other concepts can all be represented as operations involving
-calculating historical moments (average and volatility) using various
-weighting schemes.
-
-On the one hand, this increases the rigour in systemically forecasting
-returns. In particular, accidentally combining two signals that you think are
-different (orthogonal) to each other but are very similar in reality often
-leads to spurious predictions.
-
-On the other hand, it opens up a richer set of curves to test than the
-standard set used in forecasting.
-
-#+begin_src R :results graphics :file mweights.png :exports both
-  mom.weights = rep(0.05,20)
-  df.long = melt(data.frame(ema.weights,sma.weights,mom.weights,time=0:(max.n-1)),id="time")
-  ggplot(data=df.long,
-	   aes(x=time, y=value,color=variable)) +
-      geom_line()
-#+end_src
-
-#+results:
-[[file:img/mweights.png]]
-
-A momentum signal doesn't have to be arrived at using a linear weighting
-scheme - it makes much more sense if recent returns are more important
-indicators of what will happen next compared with returns in the distant past.
-Always using an exponential weighting scheme is like assuming that markets
-behave exactly like atoms undergoing nuclear decay. There's no fundamental
-reason why weights can't go negative and doing this would naturally
-incorporate mean reversion potentials naturally with momentum forces.
-
-Using this generalist approach to calculating historical statistics is a core
-of the proposed system design.
-
-** NEXT signal prediction
-SCHEDULED: <2013-04-20 Sat>
 ** NEXT speed testing
 SCHEDULED: <2013-04-20 Sat>
 ** algo soup
@@ -3430,8 +3167,8 @@ CLOSED: [2013-04-11 Thu 15:47]
   :PROPERTIES:
   :PAGE:     about.html
   :template: about.html
-  :blog:     t
-  :top:      t
+  :blog: 
+  :top: 
   :END:
 
 #+begin_html
@@ -3621,6 +3358,508 @@ limitations under the License.</p>
 
 
 ** Blog
+*** Signal Prediction
+CLOSED: [2013-04-22 Mon 17:12] 
+SCHEDULED: <2013-04-20 Sat>
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2013-04-22 Mon 17:12]
+:END:
+:PROPERTIES:
+:tangle:   R/signal.prediction.R
+:blog:     t
+:top:      t
+:END:
+
+#+begin_html
+<script type="text/javascript"
+  src="https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+#+end_html
+
+The analytics below takes the weighted moment function (wmom[fn:1]) discussed in the
+previous post and applies the thinking to daily data on the SP500. The main
+purpose is to provide examples of:
+- using wmom to replicate trading signals in a flexible and generic way.
+- re-using wmom to estimate future return distribution and then apply that
+  distribution to workshop future evolution of the signal.
+- use of the bigvis package to compress and represent large data sets.
+
+It's not commonly known that market signals involving moving averages are
+forecastable. You know with certainty the returns that are dropping out of the
+calculation and if we have some idea of the future stochastics, we can
+estimate a distribution of return innovations that is anything but a random
+walk. In other words, we can arrive at a probability that a signal will ping
+without doing anything involving guessing market direction. This effect is
+small, but as the analysis shows, there is a large and profitable gap between
+perfect execution contemporaneous with a signal ping, and execution before
+the ping based on future signal evolution that doesn't involve guessing future
+market direction.
+
+**** sp500 data
+
+#+begin_src R :results silent
+  rm(list = ls())
+  require(xts)
+  require(quantmod)
+  options(warn=-1)
+  Sys.setenv(TZ='GMT')
+  getSymbols("^GSPC",src='yahoo', from='1927-01-01')
+  sp500.price=na.omit(Cl(GSPC))
+  sp500=log(sp500.price/lag(sp500.price,1))
+  sp500=sp500[-1]
+  colnames(sp500)="sp500"  
+#+end_src
+
+**** wmom
+
+The function:
+- first calculates the weighted mean for every day of the return series.
+- fills in the initial mean values using the weights.  This is equivalent to
+  assuming returns prior to the time series were zero.
+- uses the mean series as a centering for the weighted volatility calculation.
+
+#+begin_src R :results silent
+  wmom = function(rets, weights) {
+    mean=as.double(filter(rets,weights$mean,sides=1))
+    mean[1:length(weights$mean)]=cumsum(rets[1:length(weights$mean)]*as.matrix(weights$mean))
+    xvol=(rets-mean)^2
+    vol=as.double(filter(xvol,weights$vol,sides=1))^0.5
+    vol[1:length(weights$vol)]=cumsum(xvol[1:length(weights$vol)]*as.matrix(weights$vol))^0.5
+    wmom=data.frame(mean=mean, vol=vol)
+  }
+#+end_src
+
+- unit test
+  #+begin_src R :results silent
+  rets=sp500
+  weights=weights
+  #wmom = function(rets, weights) {
+    mean=as.double(filter(rets,weights$mean,sides=1))
+    mean[1:length(weights$mean)]=cumsum(rets[1:length(weights$mean)]*as.matrix(weights$mean))
+    xvol=(rets-mean)^2
+    vol=as.double(filter(xvol,weights$vol,sides=1))^0.5
+    vol[1:length(weights$vol)]=cumsum(xvol[1:length(weights$vol)]*as.matrix(weights$vol))^0.5
+    wmom=data.frame(mean=mean, vol=vol)
+  #}
+  #+end_src
+
+**** moments regression
+
+Future volatility is highly forecastable, based on historical volatility and
+historical mean return.  This always needs to be accounted for any statitical
+analysis of time series and will often result in random varaites moving from
+being fat-tailed to normal.
+
+#+begin_src R :results output :exports both
+  l=251
+  weights=data.frame(mean=rep(1/l,l),vol=rep(1/l,l))
+  m=wmom(sp500,weights)
+  data=data.frame(sp500[-1],sp500[-1]^2,
+    m$mean[-length(m$mean)],m$vol[-length(m$vol)]) #1 day delay in signal
+  colnames(data)=c("sp500","sp500.vol","hmean","hvol")
+  fit.mean = lm(sp500 ~ hmean + hvol,data=data)
+  summary(fit.mean)
+  fit.vol = lm(sp500.vol ~ hmean + hvol,data=data)
+  summary(fit.vol)
+#+end_src
+
+#+results:
+#+begin_example
+
+Call:
+lm(formula = sp500 ~ hmean + hvol, data = data)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.229362 -0.004412  0.000193  0.004681  0.109353 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)
+(Intercept) 6.054e-05  2.167e-04   0.279    0.780
+hmean       1.022e-01  1.338e-01   0.763    0.445
+hvol        2.199e-02  2.086e-02   1.054    0.292
+
+Residual standard error: 0.009785 on 15921 degrees of freedom
+Multiple R-squared:  7.927e-05,	Adjusted R-squared:  -4.635e-05 
+F-statistic: 0.631 on 2 and 15921 DF,  p-value: 0.5321
+
+Call:
+lm(formula = sp500.vol ~ hmean + hvol, data = data)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.000542 -0.000076 -0.000039  0.000006  0.052346 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -1.992e-05  1.138e-05  -1.750   0.0802 .  
+hmean       -6.077e-02  7.030e-03  -8.644   <2e-16 ***
+hvol         1.496e-02  1.096e-03  13.656   <2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.000514 on 15921 degrees of freedom
+Multiple R-squared:  0.02527,	Adjusted R-squared:  0.02515 
+F-statistic: 206.4 on 2 and 15921 DF,  p-value: < 2.2e-16
+#+end_example
+
+So the regression indicates that historical mean and volatility strongly
+predicts return^2.
+
+**** ma(20) price performance
+
+A variation of wmom as we don't need a weighted volatility estimate for the
+price ma(20) signal.
+
+#+begin_src R
+  wmean = function(rets, weights) {
+    wm=as.double(filter(rets,weights,sides=1))
+    wm[1:length(weights)]=cumsum(rets[1:length(weights)]*as.matrix(weights))
+    wmean=wm
+  }
+#+end_src
+
+#+results:
+
+Weights as per the previous post analytics.
+
+#+begin_src R
+  rets=sp500
+  weights=seq(0.95,0.05,-0.05)
+  #wmean = function(rets, weights) {
+    wmean=as.double(filter(rets,weights,sides=1))
+    wmean[1:length(weights)]=cumsum(rets[1:length(weights)]*as.matrix(weights))
+  #}
+#+end_src
+
+And a move to analytics based on log(1+return) to remove compounding issues.
+
+#+begin_src R
+  sharpe = function(rets) {
+    m=sum(log(1+rets))/length(rets)*251
+    v=sd(log(1+rets))*(251^0.5)
+    sharpe=m/v
+  }
+#+end_src
+
+The headline sharpe ratio for the signal is much higher than long-only.
+
+#+begin_src R
+  weights.ma20=seq(0.95,0.05,-0.05)
+  m=wmean(sp500,weights.ma20)
+  sig=as.double(m>0)
+  sig=sig[-length(sig)]
+  sharpe.long = sharpe(sp500[-1])
+  sharpe.ma20 = sharpe(sp500[-1]*sig)
+  c(sharpe.long,sharpe.ma20)
+#+end_src
+
+#+results:
+
+| sharpe long-only    | 0.38 |
+| sharpe price ma(20) | 0.61 |
+
+
+The code below varies the delay between signal reading and trade execution.
+
+#+begin_src R :results graphics :file assets/ma20.delay.png :exports both
+  weights.ma20=seq(0.95,0.05,-0.05)
+  m=wmean(sp500,weights.ma20)
+  sig=as.double(m>0)
+  sharpe.ma20.delay = rep(0,20)
+  sharpe.long.delay = rep(0,20)
+  
+  for (x1 in 0:20) {
+    sharpe.long.delay[x1+1] = sharpe(sp500[(x1+1):length(sp500)])
+    sharpe.ma20.delay[x1+1] = sharpe(sp500[(x1+1):length(sp500)]*sig[1:(length(sp500)-x1)])
+  }
+  require(reshape)
+  data = melt(data.frame(sharpe.long.delay, sharpe.ma20.delay, delay=0:20),id="delay")
+  require(ggplot2)
+    ggplot(data=data,
+           aes(x=delay, y=value,color=variable)) +
+      geom_line()
+  
+#+end_src
+
+#+results:
+[[file:assets/ma20.delay.png]]
+
+The calculation of sharpe according to signal delay illustrates a few
+important principles:
+- a sharpe of 3.5 is what you get if you fail to be careful and introduce any
+  sort of look-ahead bias. When humans look at price charts versus moving
+  average lines, there is a failure to recognise that the apparently strong
+  relationship is due to look-ahead bias.  The eye includes the price
+  movement from before the lines cross which contains this large sharpe.
+- signal effectiveness decays rapidly.  In this example, it is assumed that
+  the calculation of the signal and the trade are assumed to occur
+  simultaneously (at close).  Wait till next open and there is no excess
+  sharpe.
+- any forecasting ability, ahead of the actual ping, can be a significant
+  profit opportunity and even in excess of the original signal sharpe.
+
+**** turnover adjustment
+
+#+begin_src R
+  sharpe.costs = function(rets,turnover,cost) {
+    m=sum(log(1+rets))/length(rets)*251-turnover*cost
+    v=sd(log(1+rets))*(251^0.5)
+    sharpe.costs=m/v
+  }
+
+#+end_src
+
+#+begin_src R :exports both
+turnover = sum(abs(diff(sig)))/length(sig)*251
+x1=1
+scost = sharpe.costs(sp500[(x1+1):length(sp500)]*sig[1:(length(sp500)-x1)],turnover, 0.001)
+#+end_src
+
+#+results:
+: 0.341036560629536
+
+This signal is economically significant is trade costs are below 0.1%.
+
+
+**** auto-conditionality estimates
+
+Auto-conditionality is a made up term to represent the relationship between
+historical mean and volatility of return and future distributional
+characteristics.
+
+parameter estimation
+
+#+begin_src R :results output :exports both
+  l=251
+  weights=data.frame(mean=rep(1/l,l),vol=rep(1/l,l))
+  m=wmom(sp500,weights)
+  data=data.frame(sp500[-1],sp500[-1]^2,
+    m$mean[-length(m$mean)],m$vol[-length(m$vol)]) #1 day delay in signal
+  colnames(data)=c("sp500","sp500.vol","hmean","hvol")
+  fit.mean = lm(sp500 ~ 0 + hmean + hvol,data=data)
+  summary(fit.mean)
+  fit.vol = lm((sp500.vol-0.005^2) ~ 0 + hmean + hvol,data=data)
+  summary(fit.vol)
+#+end_src
+
+#+results:
+#+begin_example
+
+Call:
+lm(formula = sp500 ~ 0 + hmean + hvol, data = data)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.229372 -0.004404  0.000206  0.004693  0.109361 
+
+Coefficients:
+      Estimate Std. Error t value Pr(>|t|)    
+hmean 0.120902   0.115869   1.043 0.296763    
+hvol  0.027355   0.008171   3.348 0.000817 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.009785 on 15922 degrees of freedom
+Multiple R-squared:  0.000917,	Adjusted R-squared:  0.0007915 
+F-statistic: 7.307 on 2 and 15922 DF,  p-value: 0.0006733
+
+Call:
+lm(formula = (sp500.vol - 0.005^2) ~ 0 + hmean + hvol, data = data)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.000514 -0.000085 -0.000048 -0.000002  0.052353 
+
+Coefficients:
+        Estimate Std. Error t value Pr(>|t|)    
+hmean -0.0746523  0.0060890  -12.26   <2e-16 ***
+hvol   0.0109861  0.0004294   25.58   <2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.0005142 on 15922 degrees of freedom
+Multiple R-squared:  0.04205,	Adjusted R-squared:  0.04193 
+F-statistic: 349.5 on 2 and 15922 DF,  p-value: < 2.2e-16
+#+end_example
+
+vol estimate
+#+begin_src R :results output
+  mean.est = 0.0003 + 0.12 * data$hmean + 0.011 * data$hvol
+  vol.est = pmax(0.005^2 + -0.075 * data$hmean + 0.027 * data$hvol)^0.5
+#+end_src
+
+#+results:
+
+**** signal forecasting
+
+Armed with a concrete signal (1 (long) if price is above ma(20) price and 0
+if price is below ma(20) price) and a distribution theory about return
+stochastics (volatility is auto-conditional), a forecast of the distribution
+signal can be performed so that a probability statement about the future
+signal can be made.  
+
+***** formulae
+
+A bit of maths may help. The actual signal (the gap between current price and ma(20) of
+price is a price signal which has been transformed into a return signal by
+dividing by the oldest price ($price_{20}$). Tomorrows signal will be the same
+return signal, but divided by $price_{19}$.
+
+The difference between the signal today and the signal tomorrow is:
+
+\begin{align}
+signal_{today} &= 0.95 \ast p_{0} - 0.05 \ast p_{1} - ... -0.05 \ast p_{19}\\
+signal_{tomorrow} &= 0.95 \ast p_{-1} - 0.05 \ast p_{0} - ... -0.05 \ast p_{18}\\
+\delta{signal} &= 0.95 \ast p_{-1} - 1.0 \ast p_{0} + 0.05 p_{19}
+\end{align}
+
+In return terms, (dividing by current price: $price_{0}$)
+
+\begin{multline}
+\delta{signal}/price_{0} = 0.95 \ast return_{-1} - 0.05 \ast \sum_{0}^{18}return
+\end{multline}
+
+$return_{-1}$ is tomorrows return because the subscript convention was to
+label returns backwards in time.
+
+
+***** model
+
+Modelling $r_{-1}$ as a random variate r ~ N(0,vol.est) enables the signal to
+be turned into a probabilistic measure (what is the probability of
+the signal being long tomorrow?).
+
+#+begin_src R :results graphics :file assets/sig.example.png :exports both
+  price=c(0,cumsum(log(1+sp500)))
+  weights.av19 = rep(0.05,19)
+  weights.av20 = rep(0.05,20)
+  price.ma=as.double(filter(price,weights.av20,sides=1))
+  price.ma[1:length(weights.av20)]=cumsum(price[1:length(weights.av20)])/1:length(weights.av20)
+  gap=price-price.ma
+  st.mean.forecast = 0
+  return.forecast = st.mean.forecast-c(0,wmean(log(1+sp500),weights.av19))
+  price.ma.delta = c(0,price.ma[1:(length(price)-1)] * return.forecast[1:(length(price)-1)])
+  price.ma.forecast = c(0,price.ma[1:(length(price)-1)]) - price.ma.delta
+  gap.forecast.norm = (c(0,gap[1:(length(price)-1)])+price.ma.delta)/c(0.005,vol.est[1:(length(price)-1)])
+  sig.forecast = pnorm(gap.forecast.norm)
+  sig = as.double(gap>0)
+  
+  df1 = data.frame(price,price.ma,price.ma.forecast,sig,sig.forecast,
+                   time=0:(length(price)-1))
+  colnames(df1) = c("price","price.ma","forecast.ma","sig","sig.forecast","time")
+  
+  require(ggplot2)
+  require(reshape2)    
+  
+  df1.melt = melt(df1[1:100,],measure.vars=c("price","price.ma","sig","sig.forecast"))
+  
+  df1.melt$type = c("sig","price")[as.double(is.element(df1.melt$variable,as.factor(c("price","price.ma"))))+1]
+  
+  ggplot(df1.melt, aes(x = time, y = value)) +
+    geom_line(aes(color = variable)) +
+    facet_grid(type ~ ., scales = "free_y")
+  #+end_src
+
+#+results:
+[[file:assets/sig.example.png]]
+
+The example can be easily extended out beyond a day.
+
+***** signal forecast and returns
+
+Return histograms for various signal probabilities is shown below:
+
+#+begin_src R :results graphics :file assets/sig.returns.png :exports both
+  require(bigvis)
+  tweak <- list(
+    theme(
+      legend.position = "bottom",
+      plot.margin = unit(c(0, 0.5, 0, 0.5), "lines"),
+      legend.key.width = unit(1, "inches"),
+      text = element_text(size = 18)
+    ),
+    labs(x = NULL, y = NULL, fill = NULL),
+    scale_fill_gradient(low="#e5e5e5", high = "#444548")
+  )
+  
+  ret.sum = condense(bin(df2$sig.forecast,0.02),bin(df2$rets,0.002))
+  rs = peel(ret.sum,.95)
+  autoplot(rs) + tweak
+#+end_src
+
+#+results:
+[[file:assets/sig.returns.png]]
+
+***** mean and volatility variations
+
+#+begin_src R :results graphics :file assets/sig.analysis.png :exports both
+  require(bigvis)
+  tweak <- list(
+    scale_x_continuous("Signal Probabilistic Forecast", breaks = seq(0,1,0.2)),
+    ylab(NULL),
+    theme(
+      plot.margin = unit(c(0, 0, 0, 0), "lines"),
+      text = element_text(size = 18),
+      panel.margin = unit(0.25, "cm")
+    )
+  )
+  ret.sum = condense(bin(df2$sig.forecast,0.02),z=df2$rets, summary = "sd")
+  
+  d = data.frame(
+    ret = rep(ret.sum$df2.sig.forecast,3),
+    summary = rep(c("count","mean","sd"), each = nrow(ret.sum)),
+    value = c(ret.sum$.count, ret.sum$.mean*251, ret.sum$.sd*(251^.5))
+  )
+  
+  smoothes <- list(
+    count = smooth(ret.sum, 0.2, var = ".count", type = "robust"),
+    mean = smooth(ret.sum, 0.2, var = ".mean", type = "robust"),
+    sd = smooth(ret.sum, 0.2, var = ".sd", type = "robust"))
+  smoothes$mean$.mean = smoothes$mean$.mean*251
+  smoothes$sd$.sd = smoothes$sd$.sd*(251^0.5)
+  
+  smoothes <- Map(function(x, n) {
+    names(x)[2] <- "value"
+    x$summary <- n
+    x
+  }, smoothes, names(smoothes))
+  smooth <- do.call(rbind, smoothes)
+  smooth$summary <- factor(smooth$summary, levels = c("count", "mean", "sd"))
+  levels(smooth$summary)[1] <- "count"
+  
+  qplot(ret, value, data = d, geom = "line") +
+    facet_grid(summary ~ ., scales = "free") +
+    tweak +
+    geom_line(data = smooth, aes(x=df2.sig.forecast, y=value),colour="#000099") 
+    
+  
+#+end_src
+
+#+results:
+[[file:assets/sig.analysis.png]]
+
+The chart above utilises the bigvis package to compress the return results
+for the range of signal forecasts.
+
+Clearly the price ma(20) signal is above all a proxy for volatility:
+- a signal forecast of 0 (price clearly below the moving average of price) is
+  strongly associated with increased volatility.  Volatility reduces sharpely
+  for signal strength above zero and continues to decrease as signal
+  increases.
+- there is little difference between returns when the signal is clearly 1 and
+  the returns when the signal is clearly 0. Although probably not
+  statistically significant, there is some increase in the average return when
+  the signal probabilities are around 0.5. This may be associated with
+  resistance pressures on return when current price is at a popular moving
+  average line.
+
+
+***** Footnotes
+
+[fn:1] refactored name.  Previous post referred to weighted.historical
+
+
 *** Statistical Forecasting
 CLOSED: [2013-04-17 Wed 16:23]
 :LOGBOOK:
@@ -3712,10 +3951,10 @@ A signal based on historical prices can also be expressed in terms of
 historical returns given:
 
 \begin{align}
-1 + return_{n} = \frac{price_{n}}{price_{(n-1)}}
+1 + return_{0} = \frac{price_{0}}{price_{1}}
 \end{align}
 
-and thus
+and, more generally
 
 \begin{equation}
 \frac{price_{0}}{price_{n}} =
@@ -3733,10 +3972,10 @@ and thus
 
 
 Now being a generic signal, you can divide by anything you want and it's still
-a signal.  Dividing by $price_{19}$ (I'm making the maths easier) gives:
+a signal.  Dividing by $price_{20}$ (I'm making the maths easier) gives:
 
 \begin{align}
-&(k_{0} \ast \frac{price_{0}}{price_{19}}) + (k_{1} \ast \frac{price_{1}}{price_{19}}) + \cdots + (k_{19} \ast \frac{price_{19}}{price_{19}}) \\
+&(k_{0} \ast \frac{price_{0}}{price_{20}}) + (k_{1} \ast \frac{price_{1}}{price_{20}}) + \cdots + (k_{19} \ast \frac{price_{19}}{price_{20}}) \\
 \Rightarrow &k_{0} \ast (1 + return_{0} + ... + return_{19}) + \\
 &k_{1} \ast (1 + return_{1} + ... + return_{19}) + \\
 &\cdots + \\
@@ -3752,7 +3991,7 @@ The first term (sum of weights) is zero, so for our first price MA example
 \begin{align}
 signal = &0.95 \ast return_{0} +\\
 &0.9 \ast return_{1} + ... +\\
-&0.05 \ast return_{19}
+&0.05 \ast return_{18}
 \end{align}
 
 So a price moving average signal is the same as a return moving average where
