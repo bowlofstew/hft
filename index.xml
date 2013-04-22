@@ -3,9 +3,650 @@
   <title>hft,</title>
   <link href="http://scarcecapital.com/hft/index.xml" rel="self" />
   <link href="http://scarcecapital.com/hft"/>
-  <updated>2013-04-20T20:35:09Z</updated>
+  <updated>2013-04-22T17:18:54Z</updated>
   <id>http://scarcecapital.com/hft/index.xml</id>
   <entry>
+<title type="html">Signal Prediction</title>
+<author><name>tony day</name></author>
+<link href="http://scarcecapital.com/hft/blog/signal-prediction.html"/>
+<updated>2013-04-22T17:12:00Z</updated>
+<published>2013-04-22T17:12:00Z</published>
+<id>http://scarcecapital.com/hft/blog/signal-prediction.html</id>
+<content type="html">&lt;script type="text/javascript"
+  src="https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"&gt;
+&lt;/script&gt;
+
+&lt;p&gt;
+The analytics below takes the weighted moment function (wmom&lt;sup&gt;&lt;a id="fnr.1" name="fnr.1" class="footref" href="#fn.1"&gt;1&lt;/a&gt;&lt;/sup&gt;) discussed in the
+previous post and applies the thinking to daily data on the SP500. The main
+purpose is to provide examples of:
+&lt;/p&gt;
+&lt;ul class="org-ul"&gt;
+&lt;li&gt;using wmom to replicate trading signals in a flexible and generic way.
+&lt;/li&gt;
+&lt;li&gt;re-using wmom to estimate future return distribution and then apply that
+distribution to workshop future evolution of the signal.
+&lt;/li&gt;
+&lt;li&gt;use of the bigvis package to compress and represent large data sets.
+&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;
+It's not commonly known that market signals involving moving averages are
+forecastable. You know with certainty the returns that are dropping out of the
+calculation and if we have some idea of the future stochastics, we can
+estimate a distribution of return innovations that is anything but a random
+walk. In other words, we can arrive at a probability that a signal will ping
+without doing anything involving guessing market direction. This effect is
+small, but as the analysis shows, there is a large and profitable gap between
+perfect execution contemporaneous with a signal ping, and execution before
+the ping based on future signal evolution that doesn't involve guessing future
+market direction.
+&lt;/p&gt;
+
+&lt;div id="outline-container-sec-1" class="outline-2"&gt;
+&lt;h2 id="sec-1"&gt;sp500 data&lt;/h2&gt;
+&lt;div class="outline-text-2" id="text-1"&gt;
+&lt;div class="org-src-container"&gt;
+
+&lt;pre class="src src-R"&gt;&lt;span style="color: #7a92d4;"&gt;rm&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;list &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;ls&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;())&lt;/span&gt;
+&lt;span style="color: #b9a16c;"&gt;require&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;xts&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #b9a16c;"&gt;require&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;quantmod&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;options&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;warn&lt;span style="color: #b9a16c;"&gt;=-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;Sys.setenv&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;TZ&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;'GMT'&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;getSymbols&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"^GSPC"&lt;/span&gt;,src&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;'yahoo'&lt;/span&gt;, from&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;'1927-01-01'&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+sp500.price&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;na.omit&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;Cl&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;GSPC&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+sp500&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;log&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sp500.price&lt;span style="color: #b9a16c;"&gt;/&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;lag&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sp500.price,&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+sp500&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;sp500&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;colnames&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sp500&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"sp500"&lt;/span&gt;
+&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div id="outline-container-sec-2" class="outline-2"&gt;
+&lt;h2 id="sec-2"&gt;wmom&lt;/h2&gt;
+&lt;div class="outline-text-2" id="text-2"&gt;
+&lt;p&gt;
+The function:
+&lt;/p&gt;
+&lt;ul class="org-ul"&gt;
+&lt;li&gt;first calculates the weighted mean for every day of the return series.
+&lt;/li&gt;
+&lt;li&gt;fills in the initial mean values using the weights.  This is equivalent to
+assuming returns prior to the time series were zero.
+&lt;/li&gt;
+&lt;li&gt;uses the mean series as a centering for the weighted volatility calculation.
+&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;div class="org-src-container"&gt;
+
+&lt;pre class="src src-R"&gt;wmom &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #f0dfaf; font-weight: bold;"&gt;function&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;rets, weights&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt; &lt;span style="color: #bf89d1;"&gt;{&lt;/span&gt;
+  mean&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;as.double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;filter&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;rets,weights$mean,sides&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+  mean&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;weights$mean&lt;span style="color: #bf89d1;"&gt;)]&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;cumsum&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;rets&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;weights$mean&lt;span style="color: #bf89d1;"&gt;)]&lt;/span&gt;*&lt;span style="color: #7a92d4;"&gt;as.matrix&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;weights$mean&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+  xvol&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;rets&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;mean&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;^&lt;span style="color: #7fa08f;"&gt;2&lt;/span&gt;
+  vol&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;as.double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;filter&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;xvol,weights$vol,sides&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;^&lt;span style="color: #7fa08f;"&gt;0.5&lt;/span&gt;
+  vol&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;weights$vol&lt;span style="color: #bf89d1;"&gt;)]&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;cumsum&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;xvol&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;weights$vol&lt;span style="color: #bf89d1;"&gt;)]&lt;/span&gt;*&lt;span style="color: #7a92d4;"&gt;as.matrix&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;weights$vol&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;^&lt;span style="color: #7fa08f;"&gt;0.5&lt;/span&gt;
+  wmom&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;data.frame&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;mean&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;mean, vol&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;vol&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #bf89d1;"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;ul class="org-ul"&gt;
+&lt;li&gt;unit test
+&lt;div class="org-src-container"&gt;
+
+&lt;pre class="src src-R"&gt;rets&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;sp500
+weights&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;weights
+&lt;span style="color: #7f9f7f;"&gt;#&lt;/span&gt;&lt;span style="color: #7f9f7f;"&gt;wmom = function(rets, weights) {&lt;/span&gt;
+  mean&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;as.double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;filter&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;rets,weights$mean,sides&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+  mean&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;weights$mean&lt;span style="color: #bf89d1;"&gt;)]&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;cumsum&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;rets&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;weights$mean&lt;span style="color: #bf89d1;"&gt;)]&lt;/span&gt;*&lt;span style="color: #7a92d4;"&gt;as.matrix&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;weights$mean&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+  xvol&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;rets&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;mean&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;^&lt;span style="color: #7fa08f;"&gt;2&lt;/span&gt;
+  vol&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;as.double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;filter&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;xvol,weights$vol,sides&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;^&lt;span style="color: #7fa08f;"&gt;0.5&lt;/span&gt;
+  vol&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;weights$vol&lt;span style="color: #bf89d1;"&gt;)]&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;cumsum&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;xvol&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;weights$vol&lt;span style="color: #bf89d1;"&gt;)]&lt;/span&gt;*&lt;span style="color: #7a92d4;"&gt;as.matrix&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;weights$vol&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;^&lt;span style="color: #7fa08f;"&gt;0.5&lt;/span&gt;
+  wmom&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;data.frame&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;mean&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;mean, vol&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;vol&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #7f9f7f;"&gt;#&lt;/span&gt;&lt;span style="color: #7f9f7f;"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div id="outline-container-sec-3" class="outline-2"&gt;
+&lt;h2 id="sec-3"&gt;moments regression&lt;/h2&gt;
+&lt;div class="outline-text-2" id="text-3"&gt;
+&lt;p&gt;
+Future volatility is highly forecastable, based on historical volatility and
+historical mean return.  This always needs to be accounted for any statitical
+analysis of time series and will often result in random varaites moving from
+being fat-tailed to normal.
+&lt;/p&gt;
+
+&lt;div class="org-src-container"&gt;
+
+&lt;pre class="src src-R"&gt;l&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;251&lt;/span&gt;
+weights&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;data.frame&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;mean&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;rep&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;/&lt;/span&gt;l,l&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,vol&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;rep&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;/&lt;/span&gt;l,l&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+m&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;wmom&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sp500,weights&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+data&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;data.frame&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sp500&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,sp500&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;^&lt;span style="color: #7fa08f;"&gt;2&lt;/span&gt;,
+  m$mean&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;m$mean&lt;span style="color: #bf89d1;"&gt;)]&lt;/span&gt;,m$vol&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;m$vol&lt;span style="color: #bf89d1;"&gt;)])&lt;/span&gt; &lt;span style="color: #7f9f7f;"&gt;#&lt;/span&gt;&lt;span style="color: #7f9f7f;"&gt;1 day delay in signal&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;colnames&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;data&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;c&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"sp500"&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;"sp500.vol"&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;"hmean"&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;"hvol"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+fit.mean &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;lm&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sp500 ~ hmean &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt; hvol,data&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;data&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;summary&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;fit.mean&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+fit.vol &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;lm&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sp500.vol ~ hmean &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt; hvol,data&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;data&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;summary&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;fit.vol&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;pre class="example"&gt;
+Call:
+lm(formula = sp500 ~ hmean + hvol, data = data)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.229362 -0.004412  0.000193  0.004681  0.109353 
+
+Coefficients:
+             Estimate Std. Error t value Pr(&amp;gt;|t|)
+(Intercept) 6.054e-05  2.167e-04   0.279    0.780
+hmean       1.022e-01  1.338e-01   0.763    0.445
+hvol        2.199e-02  2.086e-02   1.054    0.292
+
+Residual standard error: 0.009785 on 15921 degrees of freedom
+Multiple R-squared:  7.927e-05, Adjusted R-squared:  -4.635e-05 
+F-statistic: 0.631 on 2 and 15921 DF,  p-value: 0.5321
+
+Call:
+lm(formula = sp500.vol ~ hmean + hvol, data = data)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.000542 -0.000076 -0.000039  0.000006  0.052346 
+
+Coefficients:
+              Estimate Std. Error t value Pr(&amp;gt;|t|)    
+(Intercept) -1.992e-05  1.138e-05  -1.750   0.0802 .  
+hmean       -6.077e-02  7.030e-03  -8.644   &amp;lt;2e-16 ***
+hvol         1.496e-02  1.096e-03  13.656   &amp;lt;2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.000514 on 15921 degrees of freedom
+Multiple R-squared:  0.02527,   Adjusted R-squared:  0.02515 
+F-statistic: 206.4 on 2 and 15921 DF,  p-value: &amp;lt; 2.2e-16
+&lt;/pre&gt;
+
+&lt;p&gt;
+So the regression indicates that historical mean and volatility strongly
+predicts return^2.
+&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div id="outline-container-sec-4" class="outline-2"&gt;
+&lt;h2 id="sec-4"&gt;ma(20) price performance&lt;/h2&gt;
+&lt;div class="outline-text-2" id="text-4"&gt;
+&lt;p&gt;
+A variation of wmom as we don't need a weighted volatility estimate for the
+price ma(20) signal.
+&lt;/p&gt;
+
+&lt;div class="org-src-container"&gt;
+
+&lt;pre class="src src-R"&gt;wmean &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #f0dfaf; font-weight: bold;"&gt;function&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;rets, weights&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt; &lt;span style="color: #bf89d1;"&gt;{&lt;/span&gt;
+  wm&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;as.double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;filter&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;rets,weights,sides&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+  wm&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;weights&lt;span style="color: #bf89d1;"&gt;)]&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;cumsum&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;rets&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;weights&lt;span style="color: #bf89d1;"&gt;)]&lt;/span&gt;*&lt;span style="color: #7a92d4;"&gt;as.matrix&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;weights&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+  wmean&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;wm
+&lt;span style="color: #bf89d1;"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;
+Weights as per the previous post analytics.
+&lt;/p&gt;
+
+&lt;div class="org-src-container"&gt;
+
+&lt;pre class="src src-R"&gt;rets&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;sp500
+weights&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;seq&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0.95&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;0.05&lt;/span&gt;,&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0.05&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #7f9f7f;"&gt;#&lt;/span&gt;&lt;span style="color: #7f9f7f;"&gt;wmean = function(rets, weights) {&lt;/span&gt;
+  wmean&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;as.double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;filter&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;rets,weights,sides&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+  wmean&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;weights&lt;span style="color: #bf89d1;"&gt;)]&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;cumsum&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;rets&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;weights&lt;span style="color: #bf89d1;"&gt;)]&lt;/span&gt;*&lt;span style="color: #7a92d4;"&gt;as.matrix&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;weights&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+&lt;span style="color: #7f9f7f;"&gt;#&lt;/span&gt;&lt;span style="color: #7f9f7f;"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;
+And a move to analytics based on log(1+return) to remove compounding issues.
+&lt;/p&gt;
+
+&lt;div class="org-src-container"&gt;
+
+&lt;pre class="src src-R"&gt;sharpe &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #f0dfaf; font-weight: bold;"&gt;function&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;rets&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt; &lt;span style="color: #bf89d1;"&gt;{&lt;/span&gt;
+  m&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;sum&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;log&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;rets&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;/&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;rets&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;*&lt;span style="color: #7fa08f;"&gt;251&lt;/span&gt;
+  v&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;sd&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;log&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;rets&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;*&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;251&lt;/span&gt;^&lt;span style="color: #7fa08f;"&gt;0.5&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+  sharpe&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;m&lt;span style="color: #b9a16c;"&gt;/&lt;/span&gt;v
+&lt;span style="color: #bf89d1;"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;
+The headline sharpe ratio for the signal is much higher than long-only.
+&lt;/p&gt;
+
+&lt;div class="org-src-container"&gt;
+
+&lt;pre class="src src-R"&gt;weights.ma20&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;seq&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0.95&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;0.05&lt;/span&gt;,&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0.05&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+m&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;wmean&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sp500,weights.ma20&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+sig&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;as.double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;m&lt;span style="color: #b9a16c;"&gt;&amp;gt;&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+sig&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;sig&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sig&lt;span style="color: #bf89d1;"&gt;)]&lt;/span&gt;
+sharpe.long &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;sharpe&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sp500&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;])&lt;/span&gt;
+sharpe.ma20 &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;sharpe&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sp500&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;*sig&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;c&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sharpe.long,sharpe.ma20&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides"&gt;
+
+
+&lt;colgroup&gt;
+&lt;col class="left"/&gt;
+
+&lt;col class="right"/&gt;
+&lt;/colgroup&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td class="left"&gt;sharpe long-only&lt;/td&gt;
+&lt;td class="right"&gt;0.38&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td class="left"&gt;sharpe price ma(20)&lt;/td&gt;
+&lt;td class="right"&gt;0.61&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+
+&lt;p&gt;
+The code below varies the delay between signal reading and trade execution.
+&lt;/p&gt;
+
+&lt;div class="org-src-container"&gt;
+
+&lt;pre class="src src-R"&gt;weights.ma20&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;seq&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0.95&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;0.05&lt;/span&gt;,&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0.05&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+m&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;wmean&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sp500,weights.ma20&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+sig&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;as.double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;m&lt;span style="color: #b9a16c;"&gt;&amp;gt;&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+sharpe.ma20.delay &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;rep&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;20&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+sharpe.long.delay &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;rep&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;20&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+
+&lt;span style="color: #f0dfaf; font-weight: bold;"&gt;for&lt;/span&gt; &lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;x1 &lt;span style="color: #f0dfaf; font-weight: bold;"&gt;in&lt;/span&gt; &lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;:&lt;span style="color: #7fa08f;"&gt;20&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt; &lt;span style="color: #bf89d1;"&gt;{&lt;/span&gt;
+  sharpe.long.delay&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;x1&lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;sharpe&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sp500&lt;span style="color: #bf89d1;"&gt;[(&lt;/span&gt;x1&lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;:&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sp500&lt;span style="color: #bf89d1;"&gt;)])&lt;/span&gt;
+  sharpe.ma20.delay&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;x1&lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;sharpe&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sp500&lt;span style="color: #bf89d1;"&gt;[(&lt;/span&gt;x1&lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;:&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sp500&lt;span style="color: #bf89d1;"&gt;)]&lt;/span&gt;*sig&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sp500&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;x1&lt;span style="color: #bf89d1;"&gt;)])&lt;/span&gt;
+&lt;span style="color: #bf89d1;"&gt;}&lt;/span&gt;
+&lt;span style="color: #b9a16c;"&gt;require&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;reshape&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+data &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;melt&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;data.frame&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sharpe.long.delay, sharpe.ma20.delay, delay&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;:&lt;span style="color: #7fa08f;"&gt;20&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,id&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"delay"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #b9a16c;"&gt;require&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;ggplot2&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+  &lt;span style="color: #7a92d4;"&gt;ggplot&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;data&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;data,
+         &lt;span style="color: #7a92d4;"&gt;aes&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;x&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;delay, y&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;value,color&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;variable&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;
+    &lt;span style="color: #7a92d4;"&gt;geom_line&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;()&lt;/span&gt;
+&lt;/pre&gt;
+&lt;/div&gt;
+
+
+&lt;div class="figure"&gt;
+&lt;p&gt;&lt;img src="../blog/signal-prediction/ma20.delay.png"  alt="ma20.delay.png"/&gt;&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;p&gt;
+The calculation of sharpe according to signal delay illustrates a few
+important principles:
+&lt;/p&gt;
+&lt;ul class="org-ul"&gt;
+&lt;li&gt;a sharpe of 3.5 is what you get if you fail to be careful and introduce any
+sort of look-ahead bias. When humans look at price charts versus moving
+average lines, there is a failure to recognise that the apparently strong
+relationship is due to look-ahead bias.  The eye includes the price
+movement from before the lines cross which contains this large sharpe.
+&lt;/li&gt;
+&lt;li&gt;signal effectiveness decays rapidly.  In this example, it is assumed that
+the calculation of the signal and the trade are assumed to occur
+simultaneously (at close).  Wait till next open and there is no excess
+sharpe.
+&lt;/li&gt;
+&lt;li&gt;any forecasting ability, ahead of the actual ping, can be a significant
+profit opportunity and even in excess of the original signal sharpe.
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div id="outline-container-sec-5" class="outline-2"&gt;
+&lt;h2 id="sec-5"&gt;turnover adjustment&lt;/h2&gt;
+&lt;div class="outline-text-2" id="text-5"&gt;
+&lt;div class="org-src-container"&gt;
+
+&lt;pre class="src src-R"&gt;sharpe.costs &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #f0dfaf; font-weight: bold;"&gt;function&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;rets,turnover,cost&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt; &lt;span style="color: #bf89d1;"&gt;{&lt;/span&gt;
+  m&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;sum&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;log&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;rets&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;/&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;rets&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;*&lt;span style="color: #7fa08f;"&gt;251&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;turnover*cost
+  v&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;sd&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;log&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;rets&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;*&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;251&lt;/span&gt;^&lt;span style="color: #7fa08f;"&gt;0.5&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+  sharpe.costs&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;m&lt;span style="color: #b9a16c;"&gt;/&lt;/span&gt;v
+&lt;span style="color: #bf89d1;"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;div class="org-src-container"&gt;
+
+&lt;pre class="src src-R"&gt;turnover &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;sum&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;abs&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;diff&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sig&lt;span style="color: #bf89d1;"&gt;)))&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;/&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sig&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;*&lt;span style="color: #7fa08f;"&gt;251&lt;/span&gt;
+x1&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;
+scost &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;sharpe.costs&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sp500&lt;span style="color: #bf89d1;"&gt;[(&lt;/span&gt;x1&lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;:&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sp500&lt;span style="color: #bf89d1;"&gt;)]&lt;/span&gt;*sig&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sp500&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;x1&lt;span style="color: #bf89d1;"&gt;)]&lt;/span&gt;,turnover, &lt;span style="color: #7fa08f;"&gt;0.001&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;pre class="example"&gt;
+0.341036560629536
+&lt;/pre&gt;
+
+&lt;p&gt;
+This signal is economically significant is trade costs are below 0.1%.
+&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div id="outline-container-sec-6" class="outline-2"&gt;
+&lt;h2 id="sec-6"&gt;auto-conditionality estimates&lt;/h2&gt;
+&lt;div class="outline-text-2" id="text-6"&gt;
+&lt;p&gt;
+Auto-conditionality is a made up term to represent the relationship between
+historical mean and volatility of return and future distributional
+characteristics.
+&lt;/p&gt;
+
+&lt;p&gt;
+parameter estimation
+&lt;/p&gt;
+
+&lt;div class="org-src-container"&gt;
+
+&lt;pre class="src src-R"&gt;l&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;251&lt;/span&gt;
+weights&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;data.frame&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;mean&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;rep&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;/&lt;/span&gt;l,l&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,vol&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;rep&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;/&lt;/span&gt;l,l&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+m&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;wmom&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sp500,weights&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+data&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;data.frame&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sp500&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,sp500&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;^&lt;span style="color: #7fa08f;"&gt;2&lt;/span&gt;,
+  m$mean&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;m$mean&lt;span style="color: #bf89d1;"&gt;)]&lt;/span&gt;,m$vol&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;m$vol&lt;span style="color: #bf89d1;"&gt;)])&lt;/span&gt; &lt;span style="color: #7f9f7f;"&gt;#&lt;/span&gt;&lt;span style="color: #7f9f7f;"&gt;1 day delay in signal&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;colnames&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;data&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;c&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"sp500"&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;"sp500.vol"&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;"hmean"&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;"hvol"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+fit.mean &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;lm&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;sp500 ~ &lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt; hmean &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt; hvol,data&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;data&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;summary&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;fit.mean&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+fit.vol &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;lm&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;((&lt;/span&gt;sp500.vol&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0.005&lt;/span&gt;^&lt;span style="color: #7fa08f;"&gt;2&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt; ~ &lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt; hmean &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt; hvol,data&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;data&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;summary&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;fit.vol&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;pre class="example"&gt;
+Call:
+lm(formula = sp500 ~ 0 + hmean + hvol, data = data)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.229372 -0.004404  0.000206  0.004693  0.109361 
+
+Coefficients:
+      Estimate Std. Error t value Pr(&amp;gt;|t|)    
+hmean 0.120902   0.115869   1.043 0.296763    
+hvol  0.027355   0.008171   3.348 0.000817 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.009785 on 15922 degrees of freedom
+Multiple R-squared:  0.000917,  Adjusted R-squared:  0.0007915 
+F-statistic: 7.307 on 2 and 15922 DF,  p-value: 0.0006733
+
+Call:
+lm(formula = (sp500.vol - 0.005^2) ~ 0 + hmean + hvol, data = data)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.000514 -0.000085 -0.000048 -0.000002  0.052353 
+
+Coefficients:
+        Estimate Std. Error t value Pr(&amp;gt;|t|)    
+hmean -0.0746523  0.0060890  -12.26   &amp;lt;2e-16 ***
+hvol   0.0109861  0.0004294   25.58   &amp;lt;2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.0005142 on 15922 degrees of freedom
+Multiple R-squared:  0.04205,   Adjusted R-squared:  0.04193 
+F-statistic: 349.5 on 2 and 15922 DF,  p-value: &amp;lt; 2.2e-16
+&lt;/pre&gt;
+
+&lt;p&gt;
+vol estimate
+&lt;/p&gt;
+&lt;div class="org-src-container"&gt;
+
+&lt;pre class="src src-R"&gt;mean.est &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7fa08f;"&gt;0.0003&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt; &lt;span style="color: #7fa08f;"&gt;0.12&lt;/span&gt; * data$hmean &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt; &lt;span style="color: #7fa08f;"&gt;0.011&lt;/span&gt; * data$hvol
+vol.est &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;pmax&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0.005&lt;/span&gt;^&lt;span style="color: #7fa08f;"&gt;2&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0.075&lt;/span&gt; * data$hmean &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt; &lt;span style="color: #7fa08f;"&gt;0.027&lt;/span&gt; * data$hvol&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;^&lt;span style="color: #7fa08f;"&gt;0.5&lt;/span&gt;
+&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div id="outline-container-sec-7" class="outline-2"&gt;
+&lt;h2 id="sec-7"&gt;signal forecasting&lt;/h2&gt;
+&lt;div class="outline-text-2" id="text-7"&gt;
+&lt;p&gt;
+Armed with a concrete signal (1 (long) if price is above ma(20) price and 0
+if price is below ma(20) price) and a distribution theory about return
+stochastics (volatility is auto-conditional), a forecast of the distribution
+signal can be performed so that a probability statement about the future
+signal can be made.  
+&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;div id="outline-container-sec-7-1" class="outline-3"&gt;
+&lt;h3 id="sec-7-1"&gt;formulae&lt;/h3&gt;
+&lt;div class="outline-text-3" id="text-7-1"&gt;
+&lt;p&gt;
+A bit of maths may help. The actual signal (the gap between current price and ma(20) of
+price is a price signal which has been transformed into a return signal by
+dividing by the oldest price (\(price_{20}\)). Tomorrows signal will be the same
+return signal, but divided by \(price_{19}\).
+&lt;/p&gt;
+
+&lt;p&gt;
+The difference between the signal today and the signal tomorrow is:
+&lt;/p&gt;
+
+\begin{align}
+signal_{today} &amp;= 0.95 \ast p_{0} - 0.05 \ast p_{1} - ... -0.05 \ast p_{19}\\
+signal_{tomorrow} &amp;= 0.95 \ast p_{-1} - 0.05 \ast p_{0} - ... -0.05 \ast p_{18}\\
+\delta{signal} &amp;= 0.95 \ast p_{-1} - 1.0 \ast p_{0} + 0.05 p_{19}
+\end{align}
+
+&lt;p&gt;
+In return terms, (dividing by current price: \(price_{0}\))
+&lt;/p&gt;
+
+\begin{multline}
+\delta{signal}/price_{0} = 0.95 \ast return_{-1} - 0.05 \ast \sum_{0}^{18}return
+\end{multline}
+
+&lt;p&gt;
+\(return_{-1}\) is tomorrows return because the subscript convention was to
+label returns backwards in time.
+&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;div id="outline-container-sec-7-2" class="outline-3"&gt;
+&lt;h3 id="sec-7-2"&gt;model&lt;/h3&gt;
+&lt;div class="outline-text-3" id="text-7-2"&gt;
+&lt;p&gt;
+Modelling \(r_{-1}\) as a random variate r ~ N(0,vol.est) enables the signal to
+be turned into a probabilistic measure (what is the probability of
+the signal being long tomorrow?).
+&lt;/p&gt;
+
+&lt;div class="org-src-container"&gt;
+
+&lt;pre class="src src-R"&gt;price&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;c&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;,&lt;span style="color: #7a92d4;"&gt;cumsum&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;log&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;sp500&lt;span style="color: #bf89d1;"&gt;)))&lt;/span&gt;
+weights.av19 &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;rep&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0.05&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;19&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+weights.av20 &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;rep&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0.05&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;20&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+price.ma&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;as.double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;filter&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;price,weights.av20,sides&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+price.ma&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;weights.av20&lt;span style="color: #bf89d1;"&gt;)]&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;cumsum&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;price&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;weights.av20&lt;span style="color: #bf89d1;"&gt;)])&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;/&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;weights.av20&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+gap&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;price&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;price.ma
+st.mean.forecast &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;
+return.forecast &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; st.mean.forecast&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;c&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;,&lt;span style="color: #7a92d4;"&gt;wmean&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;log&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;sp500&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,weights.av19&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+price.ma.delta &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;c&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;,price.ma&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;price&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)]&lt;/span&gt; * return.forecast&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;price&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)])&lt;/span&gt;
+price.ma.forecast &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;c&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;,price.ma&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;price&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)])&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt; price.ma.delta
+gap.forecast.norm &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;c&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;,gap&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;price&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)])&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;price.ma.delta&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;/&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;c&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0.005&lt;/span&gt;,vol.est&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;price&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)])&lt;/span&gt;
+sig.forecast &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;pnorm&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;gap.forecast.norm&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+sig &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;as.double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;gap&lt;span style="color: #b9a16c;"&gt;&amp;gt;&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+
+df1 &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;data.frame&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;price,price.ma,price.ma.forecast,sig,sig.forecast,
+                 time&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;:&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;length&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;price&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;-&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;colnames&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;df1&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;c&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"price"&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;"price.ma"&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;"forecast.ma"&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;"sig"&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;"sig.forecast"&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;"time"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+
+&lt;span style="color: #b9a16c;"&gt;require&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;ggplot2&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #b9a16c;"&gt;require&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;reshape2&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;    
+
+df1.melt &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;melt&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;df1&lt;span style="color: #bf89d1;"&gt;[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;:&lt;span style="color: #7fa08f;"&gt;100&lt;/span&gt;,&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;,measure.vars&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;c&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"price"&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;"price.ma"&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;"sig"&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;"sig.forecast"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+
+df1.melt$type &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;c&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"sig"&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;"price"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)[&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;as.double&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;is.element&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;df1.melt$variable,&lt;span style="color: #7a92d4;"&gt;as.factor&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;c&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"price"&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;"price.ma"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))))&lt;/span&gt;&lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt;
+
+&lt;span style="color: #7a92d4;"&gt;ggplot&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;df1.melt, &lt;span style="color: #7a92d4;"&gt;aes&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;x &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; time, y &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; value&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;
+  &lt;span style="color: #7a92d4;"&gt;geom_line&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;aes&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;color &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; variable&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;
+  &lt;span style="color: #7a92d4;"&gt;facet_grid&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;type ~ ., scales &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #cc9393;"&gt;"free_y"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;/pre&gt;
+&lt;/div&gt;
+
+
+&lt;div class="figure"&gt;
+&lt;p&gt;&lt;img src="../blog/signal-prediction/sig.example.png"  alt="sig.example.png"/&gt;&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;p&gt;
+The example can be easily extended out beyond a day.
+&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div id="outline-container-sec-7-3" class="outline-3"&gt;
+&lt;h3 id="sec-7-3"&gt;signal forecast and returns&lt;/h3&gt;
+&lt;div class="outline-text-3" id="text-7-3"&gt;
+&lt;p&gt;
+Return histograms for various signal probabilities is shown below:
+&lt;/p&gt;
+
+&lt;div class="org-src-container"&gt;
+
+&lt;pre class="src src-R"&gt;&lt;span style="color: #b9a16c;"&gt;require&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;bigvis&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+tweak &lt;span style="color: #b9a16c;"&gt;&amp;lt;-&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;list&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;
+  &lt;span style="color: #7a92d4;"&gt;theme&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;
+    legend.position &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #cc9393;"&gt;"bottom"&lt;/span&gt;,
+    plot.margin &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;unit&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;c&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;, &lt;span style="color: #7fa08f;"&gt;0.5&lt;/span&gt;, &lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;, &lt;span style="color: #7fa08f;"&gt;0.5&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;, &lt;span style="color: #cc9393;"&gt;"lines"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,
+    legend.key.width &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;unit&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;, &lt;span style="color: #cc9393;"&gt;"inches"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,
+    text &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;element_text&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;size &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7fa08f;"&gt;18&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+  &lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,
+  &lt;span style="color: #7a92d4;"&gt;labs&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;x &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #8cd0d3; background-color: #3f3f3f;"&gt;NULL&lt;/span&gt;, y &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #8cd0d3; background-color: #3f3f3f;"&gt;NULL&lt;/span&gt;, fill &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #8cd0d3; background-color: #3f3f3f;"&gt;NULL&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,
+  &lt;span style="color: #7a92d4;"&gt;scale_fill_gradient&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;low&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#e5e5e5"&lt;/span&gt;, high &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #cc9393;"&gt;"#444548"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+
+ret.sum &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;condense&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;bin&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;df2$sig.forecast,&lt;span style="color: #7fa08f;"&gt;0.02&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,&lt;span style="color: #7a92d4;"&gt;bin&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;df2$rets,&lt;span style="color: #7fa08f;"&gt;0.002&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+rs &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;peel&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;ret.sum,&lt;span style="color: #7fa08f;"&gt;.95&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;autoplot&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;rs&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt; tweak
+&lt;/pre&gt;
+&lt;/div&gt;
+
+
+&lt;div class="figure"&gt;
+&lt;p&gt;&lt;img src="../blog/signal-prediction/sig.returns.png"  alt="sig.returns.png"/&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div id="outline-container-sec-7-4" class="outline-3"&gt;
+&lt;h3 id="sec-7-4"&gt;mean and volatility variations&lt;/h3&gt;
+&lt;div class="outline-text-3" id="text-7-4"&gt;
+&lt;div class="org-src-container"&gt;
+
+&lt;pre class="src src-R"&gt;&lt;span style="color: #b9a16c;"&gt;require&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;bigvis&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+tweak &lt;span style="color: #b9a16c;"&gt;&amp;lt;-&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;list&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;
+  &lt;span style="color: #7a92d4;"&gt;scale_x_continuous&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"Signal Probabilistic Forecast"&lt;/span&gt;, breaks &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;seq&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;,&lt;span style="color: #7fa08f;"&gt;0.2&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;,
+  &lt;span style="color: #7a92d4;"&gt;ylab&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #8cd0d3; background-color: #3f3f3f;"&gt;NULL&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,
+  &lt;span style="color: #7a92d4;"&gt;theme&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;
+    plot.margin &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;unit&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;c&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;, &lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;, &lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;, &lt;span style="color: #7fa08f;"&gt;0&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;, &lt;span style="color: #cc9393;"&gt;"lines"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,
+    text &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;element_text&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;size &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7fa08f;"&gt;18&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,
+    panel.margin &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;unit&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;0.25&lt;/span&gt;, &lt;span style="color: #cc9393;"&gt;"cm"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+  &lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+ret.sum &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;condense&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;bin&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;df2$sig.forecast,&lt;span style="color: #7fa08f;"&gt;0.02&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,z&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;df2$rets, summary &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #cc9393;"&gt;"sd"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+
+d &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;data.frame&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;
+  ret &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;rep&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;ret.sum$df2.sig.forecast,&lt;span style="color: #7fa08f;"&gt;3&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,
+  summary &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;rep&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7a92d4;"&gt;c&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"count"&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;"mean"&lt;/span&gt;,&lt;span style="color: #cc9393;"&gt;"sd"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;, each &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;nrow&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;ret.sum&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;,
+  value &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;c&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;ret.sum$.count, ret.sum$.mean*&lt;span style="color: #7fa08f;"&gt;251&lt;/span&gt;, ret.sum$.sd*&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;251&lt;/span&gt;^&lt;span style="color: #7fa08f;"&gt;.5&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+
+smoothes &lt;span style="color: #b9a16c;"&gt;&amp;lt;-&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;list&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;
+  count &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;smooth&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;ret.sum, &lt;span style="color: #7fa08f;"&gt;0.2&lt;/span&gt;, var &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #cc9393;"&gt;".count"&lt;/span&gt;, type &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #cc9393;"&gt;"robust"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,
+  mean &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;smooth&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;ret.sum, &lt;span style="color: #7fa08f;"&gt;0.2&lt;/span&gt;, var &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #cc9393;"&gt;".mean"&lt;/span&gt;, type &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #cc9393;"&gt;"robust"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,
+  sd &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;smooth&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;ret.sum, &lt;span style="color: #7fa08f;"&gt;0.2&lt;/span&gt;, var &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #cc9393;"&gt;".sd"&lt;/span&gt;, type &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #cc9393;"&gt;"robust"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+smoothes$mean$.mean &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; smoothes$mean$.mean*&lt;span style="color: #7fa08f;"&gt;251&lt;/span&gt;
+smoothes$sd$.sd &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; smoothes$sd$.sd*&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;251&lt;/span&gt;^&lt;span style="color: #7fa08f;"&gt;0.5&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+
+smoothes &lt;span style="color: #b9a16c;"&gt;&amp;lt;-&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;Map&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #f0dfaf; font-weight: bold;"&gt;function&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;x, n&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt; &lt;span style="color: #bf89d1;"&gt;{&lt;/span&gt;
+  &lt;span style="color: #7a92d4;"&gt;names&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;x&lt;span style="color: #bf89d1;"&gt;)[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;2&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;&amp;lt;-&lt;/span&gt; &lt;span style="color: #cc9393;"&gt;"value"&lt;/span&gt;
+  x$summary &lt;span style="color: #b9a16c;"&gt;&amp;lt;-&lt;/span&gt; n
+  x
+&lt;span style="color: #bf89d1;"&gt;}&lt;/span&gt;, smoothes, &lt;span style="color: #7a92d4;"&gt;names&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;smoothes&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+smooth &lt;span style="color: #b9a16c;"&gt;&amp;lt;-&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;do.call&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;rbind, smoothes&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+smooth$summary &lt;span style="color: #b9a16c;"&gt;&amp;lt;-&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;factor&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;smooth$summary, levels &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #7a92d4;"&gt;c&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"count"&lt;/span&gt;, &lt;span style="color: #cc9393;"&gt;"mean"&lt;/span&gt;, &lt;span style="color: #cc9393;"&gt;"sd"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;))&lt;/span&gt;
+&lt;span style="color: #7a92d4;"&gt;levels&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;smooth$summary&lt;span style="color: #bf89d1;"&gt;)[&lt;/span&gt;&lt;span style="color: #7fa08f;"&gt;1&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;]&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;&amp;lt;-&lt;/span&gt; &lt;span style="color: #cc9393;"&gt;"count"&lt;/span&gt;
+
+&lt;span style="color: #7a92d4;"&gt;qplot&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;ret, value, data &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; d, geom &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #cc9393;"&gt;"line"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;
+  &lt;span style="color: #7a92d4;"&gt;facet_grid&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;summary ~ ., scales &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; &lt;span style="color: #cc9393;"&gt;"free"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt; &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;
+  tweak &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt;
+  &lt;span style="color: #7a92d4;"&gt;geom_line&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;data &lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt; smooth, &lt;span style="color: #7a92d4;"&gt;aes&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;(&lt;/span&gt;x&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;df2.sig.forecast, y&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;value&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;,colour&lt;span style="color: #b9a16c;"&gt;=&lt;/span&gt;&lt;span style="color: #cc9393;"&gt;"#000099"&lt;/span&gt;&lt;span style="color: #bf89d1;"&gt;)&lt;/span&gt;
+&lt;/pre&gt;
+&lt;/div&gt;
+
+
+&lt;div class="figure"&gt;
+&lt;p&gt;&lt;img src="../blog/signal-prediction/sig.analysis.png"  alt="sig.analysis.png"/&gt;&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;p&gt;
+The chart above utilises the bigvis package to compress the return results
+for the range of signal forecasts.
+&lt;/p&gt;
+
+&lt;p&gt;
+Clearly the price ma(20) signal is above all a proxy for volatility:
+&lt;/p&gt;
+&lt;ul class="org-ul"&gt;
+&lt;li&gt;a signal forecast of 0 (price clearly below the moving average of price) is
+strongly associated with increased volatility.  Volatility reduces sharpely
+for signal strength above zero and continues to decrease as signal
+increases.
+&lt;/li&gt;
+&lt;li&gt;there is little difference between returns when the signal is clearly 1 and
+the returns when the signal is clearly 0. Although probably not
+statistically significant, there is some increase in the average return when
+the signal probabilities are around 0.5. This may be associated with
+resistance pressures on return when current price is at a popular moving
+average line.
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div id="footnotes"&gt;
+&lt;h2 class="footnotes"&gt;Footnotes: &lt;/h2&gt;
+&lt;div id="text-footnotes"&gt;
+
+&lt;div class="footdef"&gt;&lt;sup&gt;&lt;a id="fn.1" name="fn.1" class="footnum" href="#fnr.1"&gt;1&lt;/a&gt;&lt;/sup&gt; &lt;p class="footpara"&gt;
+refactored name.  Previous post referred to weighted.historical
+&lt;/p&gt;&lt;/div&gt;
+
+
+&lt;/div&gt;
+&lt;/div&gt;</content>
+</entry>
+<entry>
 <title type="html">Statistical Forecasting</title>
 <author><name>tony day</name></author>
 <link href="http://scarcecapital.com/hft/blog/statistical-forecasting.html"/>
@@ -122,11 +763,11 @@ historical returns given:
 &lt;/p&gt;
 
 \begin{align}
-1 + return_{n} = \frac{price_{n}}{price_{(n-1)}}
+1 + return_{0} = \frac{price_{0}}{price_{1}}
 \end{align}
 
 &lt;p&gt;
-and thus
+and, more generally
 &lt;/p&gt;
 
 \begin{equation}
@@ -148,11 +789,11 @@ and thus
 
 &lt;p&gt;
 Now being a generic signal, you can divide by anything you want and it's still
-a signal.  Dividing by \(price_{19}\) (I'm making the maths easier) gives:
+a signal.  Dividing by \(price_{20}\) (I'm making the maths easier) gives:
 &lt;/p&gt;
 
 \begin{align}
-&amp;(k_{0} \ast \frac{price_{0}}{price_{19}}) + (k_{1} \ast \frac{price_{1}}{price_{19}}) + \cdots + (k_{19} \ast \frac{price_{19}}{price_{19}}) \\
+&amp;(k_{0} \ast \frac{price_{0}}{price_{20}}) + (k_{1} \ast \frac{price_{1}}{price_{20}}) + \cdots + (k_{19} \ast \frac{price_{19}}{price_{20}}) \\
 \Rightarrow &amp;k_{0} \ast (1 + return_{0} + ... + return_{19}) + \\
 &amp;k_{1} \ast (1 + return_{1} + ... + return_{19}) + \\
 &amp;\cdots + \\
@@ -170,7 +811,7 @@ The first term (sum of weights) is zero, so for our first price MA example
 \begin{align}
 signal = &amp;0.95 \ast return_{0} +\\
 &amp;0.9 \ast return_{1} + ... +\\
-&amp;0.05 \ast return_{19}
+&amp;0.05 \ast return_{18}
 \end{align}
 
 &lt;p&gt;
@@ -1234,111 +1875,6 @@ g &lt;span style="color: #dfaf8f;"&gt;&amp;lt;-&lt;/span&gt; importDotFile &lt;s
 &lt;/table&gt;
 &lt;/div&gt;
 &lt;/div&gt;
-</content>
-</entry>
-<entry>
-<title type="html">Welcome to HFT!</title>
-<author><name>tony day</name></author>
-<link href="http://scarcecapital.com/hft/about.html"/>
-<updated>2013-04-11T15:47:00Z</updated>
-<published>2013-04-11T15:47:00Z</published>
-<id>http://scarcecapital.com/hft/about.html</id>
-<content type="html">&lt;p&gt;&lt;img src="&lt;lisp&gt;(ob:path-to-root)&lt;/lisp&gt;/&lt;lisp&gt;(ob:blog-assets-dir
-BLOG)&lt;/lisp&gt;/hft-blue.png" width="100" alt=""&gt;&lt;/p&gt;
-
-&lt;br&gt;
-
-&lt;p&gt;HFT is a small project with a big ambition. We aim to build the worlds best
-algorithmic trading platform using the best off-the-shelf open source
-technology stack to be found. And all of this on a tight budget.&lt;/p&gt;
-
-&lt;p&gt;HFT is created and maintained by &lt;a href="http://twitter.com/tonyday567"&gt;Tony Day&lt;/a&gt;.&lt;/p&gt;
-
-&lt;h1&gt;Quick Start&lt;/h1&gt;
-
-&lt;p&gt;There is no quick start for hft.  The easiest way to get up to speed is to read the project &lt;a href="http://scarcecapital.com/hft"&gt;blog&lt;/a&gt;.  If you're interested in contributing to development or find a logic bug, then fork me with:&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;
-$ git clone https://github.com/tonyday567/hft.git
-&lt;/code&gt;&lt;/p&gt;
-
-&lt;h1&gt;Technology Stack&lt;/h1&gt;
-
-&lt;p&gt;The world of high frequency trading is a broad church of opinion, technology, ideas and motivations.  hft is being developed using many different tools:&lt;/p&gt;
-
-&lt;h3&gt;&lt;a href="http://www.gnu.org/software/emacs/"&gt;emacs&lt;/a&gt;, &lt;a href="http://orgmode.org"&gt;org-mode&lt;/a&gt; and literate programming&lt;/h3&gt;
-
-&lt;p&gt;&lt;a href="https://github.com/tonyday567/hft/blob/master/hft.org"&gt;hft.org&lt;/a&gt; is the nerve
-center of active development and contains just about all the important code, research notes
-and design tools being used.&lt;/p&gt;
-
-&lt;p&gt;The project makes heavy use of &lt;a href="http://orgmode.org/worg/org-contrib/babel/"&gt;babel&lt;/a&gt; to pick and mix between coding environments and languages, whilst still remaining &lt;a href="http://www.haskell.org/haskellwiki/Literate_programming"&gt;literate&lt;/a&gt;:&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;The main idea is to regard a program as a communication to human beings rather than as a set of instructions to a computer. ~ Knuth&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;Similarly, a project such as hft is as much about communication between human beings as it is about maintenance of source code.&lt;/p&gt;
-
-&lt;h3&gt;&lt;a href="http://www.r-project.org"&gt;R&lt;/a&gt;&lt;/h3&gt;
-
-&lt;p&gt;R is a strongly functional but imperative language being used for rapid
-development and research of hft and algo ideas as they arise. Most everything
-that you can think of (databases, broker interfaces, statistical analysis,
-visualization) has an R package ready to get you up and going in 5 minutes.&lt;/p&gt;
-
-&lt;h3&gt;&lt;a href="http://www.haskell.org/haskellwiki/Haskell"&gt;haskell&lt;/a&gt;&lt;/h3&gt;
-
-&lt;p&gt;R can be many things but what it is least set up for is development of
-asyncronous code. To fill this gap, the project is using haskell to frame the
-system as and when it develops.&lt;/p&gt;
-
-&lt;h3&gt;&lt;a href="http://www.interactivebrokers.com/en/main.php"&gt;Interactive Brokers&lt;/a&gt;&lt;/h3&gt;
-
-&lt;p&gt;Eventually, hft will be broker independent but during the development phase IB
-is the test case. Interactive has the most mature API that works out of the
-box and a demo account so that hft can come pre-plumbed so that (eventually)
-the project can also run out of the box.&lt;/p&gt;
-
-&lt;p&gt;Interactive Brokers consolidates tick data into 0.3 second time slices so it
-isn't appropriate for low-latency work.&lt;/p&gt;
-
-&lt;h3&gt;&lt;a href="http://www.iqfeed.net"&gt;iqfeed&lt;/a&gt;&lt;/h3&gt;
-
-&lt;p&gt;Just because it's open-source doesn't mean that it's cost free. iqfeed has
-been chosen as an initial data feed to base project R&amp;amp;D efforts on. iqfeed
-costs dollars but the software can be downloaded for free and a demo version
-allows live data to flow with a lag.&lt;/p&gt;
-
-&lt;p&gt;A useful way to support the hft project is to let DTN know if you decide to
-purshase iqfeed due to the project.&lt;/p&gt;
-
-&lt;h2&gt;Bug Tracker&lt;/h2&gt;
-
-&lt;p&gt;Have a bug or a feature request? &lt;br&gt; &lt;a href="https://github.com/tonyday567/hft/issues"&gt;Please open a new issue&lt;/a&gt;. &lt;/p&gt;
-
-&lt;h2&gt;Community&lt;/h2&gt;
-
-&lt;p&gt;hft is sponsored by &lt;a href="http://scarcecapital.com"&gt;Scarce Capital&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;Follow &lt;a href="http://twitter.com/scarcecapital"&gt;@scarcecapital on Twitter&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;Read, subscribe (and contribute!) to the hft &lt;a href="http://scarcecapital.com/hft"&gt;blog&lt;/a&gt;.&lt;/p&gt;
-
-&lt;h2&gt;Contributing&lt;/h2&gt;
-
-&lt;p&gt;Please submit all pull requests against the master branch.&lt;/p&gt;
-
-&lt;p&gt;Thanks!&lt;/p&gt;
-
-&lt;h2&gt;Authors&lt;/h2&gt;
-
-&lt;p&gt;&lt;strong&gt;Tony Day&lt;/strong&gt;&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;a href="http://twitter.com/tonyday567"&gt;http://twitter.com/tonyday567&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href="http://github.com/tonyday567"&gt;http://github.com/tonyday567&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
 </content>
 </entry>
 <entry>

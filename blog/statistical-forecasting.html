@@ -60,7 +60,7 @@
      <a href="../about.html"><i>icon-user icon-white</i> About</a>
    </li>
    <li>
-  <a class="caret-before" href="../blog/statistical-forecasting.html">
+  <a class="caret-before" href="../blog/signal-prediction.html">
        <i class="icon-coffee icon-white">
        </i>
        Blog
@@ -72,7 +72,7 @@
      <ul class="dropdown-menu">
 
 
-<li><a href="../blog/statistical-forecasting.html">Statistical Forecasting</a></li><li><a href="../blog/latency-research.html">Latency Research</a></li><li><a href="../blog/market-feed-selection.html">Market Feed Selection</a></li><li><a href="../blog/candidate-structure.html">Candidate Structure</a></li>
+<li><a href="../blog/signal-prediction.html">Signal Prediction</a></li><li><a href="../blog/statistical-forecasting.html">Statistical Forecasting</a></li><li><a href="../blog/latency-research.html">Latency Research</a></li><li><a href="../blog/market-feed-selection.html">Market Feed Selection</a></li>
 
   </ul>
 
@@ -114,7 +114,17 @@
                                     </span>
                                  </a>
       <div class="sepline"></div>
-      
+      <a class="previous skiphover" href="../blog/signal-prediction.html">
+                                    <span class="label">
+                                       newer
+                                    </span>
+                                    <span class="symbol">
+                                       >
+                                    </span>                                      
+                                    <span class="tooltip">
+                                      Signal Prediction
+                                    </span>
+                                 </a>
     </div>
   </div>
   <div class="row-fluid">
@@ -235,11 +245,11 @@ historical returns given:
 </p>
 
 \begin{align}
-1 + return_{n} = \frac{price_{n}}{price_{(n-1)}}
+1 + return_{0} = \frac{price_{0}}{price_{1}}
 \end{align}
 
 <p>
-and thus
+and, more generally
 </p>
 
 \begin{equation}
@@ -261,11 +271,11 @@ and thus
 
 <p>
 Now being a generic signal, you can divide by anything you want and it's still
-a signal.  Dividing by \(price_{19}\) (I'm making the maths easier) gives:
+a signal.  Dividing by \(price_{20}\) (I'm making the maths easier) gives:
 </p>
 
 \begin{align}
-&(k_{0} \ast \frac{price_{0}}{price_{19}}) + (k_{1} \ast \frac{price_{1}}{price_{19}}) + \cdots + (k_{19} \ast \frac{price_{19}}{price_{19}}) \\
+&(k_{0} \ast \frac{price_{0}}{price_{20}}) + (k_{1} \ast \frac{price_{1}}{price_{20}}) + \cdots + (k_{19} \ast \frac{price_{19}}{price_{20}}) \\
 \Rightarrow &k_{0} \ast (1 + return_{0} + ... + return_{19}) + \\
 &k_{1} \ast (1 + return_{1} + ... + return_{19}) + \\
 &\cdots + \\
@@ -283,7 +293,7 @@ The first term (sum of weights) is zero, so for our first price MA example
 \begin{align}
 signal = &0.95 \ast return_{0} +\\
 &0.9 \ast return_{1} + ... +\\
-&0.05 \ast return_{19}
+&0.05 \ast return_{18}
 \end{align}
 
 <p>
@@ -524,7 +534,7 @@ of the proposed system design.
       Top Posts:
       
     </p>
-    <a class="postlink" href="../blog/statistical-forecasting.html">Statistical Forecasting</a><br><a class="postlink" href="../blog/latency-research.html">Latency Research</a><br><a class="postlink" href="../blog/market-feed-selection.html">Market Feed Selection</a><br><a class="postlink" href="../blog/candidate-structure.html">Candidate Structure</a>
+    <a class="postlink" href="../blog/signal-prediction.html">Signal Prediction</a><br><a class="postlink" href="../blog/statistical-forecasting.html">Statistical Forecasting</a><br><a class="postlink" href="../blog/latency-research.html">Latency Research</a><br><a class="postlink" href="../blog/market-feed-selection.html">Market Feed Selection</a>
     
 </div>
 
