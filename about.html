@@ -138,121 +138,17 @@ $ git clone https://github.com/tonyday567/hft.git
 </div>
 </div>
 <div id="outline-container-sec-2" class="outline-2">
-<h2 id="sec-2">Technology stack</h2>
+<h2 id="sec-2">Bug tracker</h2>
 <div class="outline-text-2" id="text-2">
-<p>
-The world of high frequency trading is a broad church of opinion,
-technology, ideas and motivations. hft is being developed using many
-different tools:
-</p>
-</div>
-
-<div id="outline-container-sec-2-1" class="outline-3">
-<h3 id="sec-2-1"><a href="http://www.gnu.org/software/emacs/">emacs</a>,</h3>
-<div class="outline-text-3" id="text-2-1">
-<p>
-<a href="http://orgmode.org">org-mode</a> and
-<a href="http://en.wikipedia.org/wiki/Literate_programming">literate
-programming</a>
-</p>
-
-<p>
-<a href="https://github.com/tonyday567/hft/blob/master/hft.org">hft.org</a> is
-the nerve center of active development and contains just about all the
-important code, research notes and design tools being used.
-</p>
-
-<p>
-The project makes heavy use of
-<a href="http://orgmode.org/worg/org-contrib/babel/">babel</a> to pick and mix
-between coding environments and languages, whilst still remaining
-<a href="http://www.haskell.org/haskellwiki/Literate_programming">literate</a>:
-</p>
-
-<blockquote>
-<p>
-The main idea is to regard a program as a communication to human
-beings rather than as a set of instructions to a computer. ~ Knuth
-</p>
-</blockquote>
-
-<p>
-Similarly, a project such as hft is as much about communication between
-human beings as it is about maintenance of source code.
-</p>
-</div>
-</div>
-<div id="outline-container-sec-2-2" class="outline-3">
-<h3 id="sec-2-2"><a href="http://www.r-project.org">R</a></h3>
-<div class="outline-text-3" id="text-2-2">
-<p>
-R is a strongly functional but imperative language being used for rapid
-development and research of hft and algo ideas as they arise. Most
-everything that you can think of (databases, broker interfaces,
-statistical analysis, visualization) has an R package ready to get you
-up and going in 5 minutes.
-</p>
-</div>
-</div>
-<div id="outline-container-sec-2-3" class="outline-3">
-<h3 id="sec-2-3"><a href="http://www.haskell.org/haskellwiki/Haskell">haskell</a></h3>
-<div class="outline-text-3" id="text-2-3">
-<p>
-R can be many things but what it is least set up for is development of
-asyncronous code. To fill this gap, the project is using haskell to
-frame the system as and when it develops.
-</p>
-</div>
-</div>
-<div id="outline-container-sec-2-4" class="outline-3">
-<h3 id="sec-2-4">[[<a href="http://www.interactivebrokers.com/en/main.php][Interactive">http://www.interactivebrokers.com/en/main.php][Interactive</a></h3>
-<div class="outline-text-3" id="text-2-4">
-<p>
-Brokers]]
-</p>
-
-<p>
-Eventually, hft will be broker independent but during the development
-phase IB is the test case. Interactive has the most mature API that
-works out of the box and a demo account so that hft can come pre-plumbed
-so that (eventually) the project can also run out of the box.
-</p>
-
-<p>
-Interactive Brokers consolidates tick data into 0.3 second time slices
-so it isn't appropriate for low-latency work.
-</p>
-</div>
-</div>
-<div id="outline-container-sec-2-5" class="outline-3">
-<h3 id="sec-2-5"><a href="http://www.iqfeed.net">iqfeed</a></h3>
-<div class="outline-text-3" id="text-2-5">
-<p>
-Just because it's open-source doesn't mean that it's cost free. iqfeed
-has been chosen as an initial data feed to base project R&amp;D efforts on.
-iqfeed costs dollars but the software can be downloaded for free and a
-demo version allows live data to flow with a lag.
-</p>
-
-<p>
-A useful way to support the hft project is to let DTN know if you decide
-to purshase iqfeed due to the project.
-</p>
-</div>
-</div>
-</div>
-<div id="outline-container-sec-3" class="outline-2">
-<h2 id="sec-3">Bug tracker</h2>
-<div class="outline-text-2" id="text-3">
 <p>
 Have a bug or a feature request?
 <a href="https://github.com/tonyday567/hft/issues">Please open a new issue</a>.
 </p>
 </div>
 </div>
-<div id="outline-container-sec-4" class="outline-2">
-<h2 id="sec-4">Community</h2>
-<div class="outline-text-2" id="text-4">
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3">Community</h2>
+<div class="outline-text-2" id="text-3">
 <p>
 hft is sponsored by <a href="http://scarcecapital.com">Scarce Capital</a> as an
 adjunct to client advisory services.
@@ -274,9 +170,9 @@ Source HFT Linkedin group</a>
 </p>
 </div>
 </div>
-<div id="outline-container-sec-5" class="outline-2">
-<h2 id="sec-5">Contributing</h2>
-<div class="outline-text-2" id="text-5">
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4">Contributing</h2>
+<div class="outline-text-2" id="text-4">
 <p>
 Please submit all pull requests against the master branch.
 </p>
@@ -286,9 +182,9 @@ Thanks!
 </p>
 </div>
 </div>
-<div id="outline-container-sec-6" class="outline-2">
-<h2 id="sec-6">Authors</h2>
-<div class="outline-text-2" id="text-6">
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5">Authors</h2>
+<div class="outline-text-2" id="text-5">
 <p>
 <b>Tony Day</b>
 </p>
@@ -301,9 +197,9 @@ Thanks!
 </ul>
 </div>
 </div>
-<div id="outline-container-sec-7" class="outline-2">
-<h2 id="sec-7">Copyright and license</h2>
-<div class="outline-text-2" id="text-7">
+<div id="outline-container-sec-6" class="outline-2">
+<h2 id="sec-6">Copyright and license</h2>
+<div class="outline-text-2" id="text-6">
 <p>
 Copyright 2013 Scarce Capital.
 </p>
