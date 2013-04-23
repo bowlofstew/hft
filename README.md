@@ -17,9 +17,21 @@ There is no quick start for hft.  The easiest way to get up to speed is to read 
 ```
 $ git clone https://github.com/tonyday567/hft.git
 ```
-  
-  
 
+## News
+
+23 April, 2013
+
+A discussion group has been formed at [hft-discuss](https://groups.google.com/forum/?hl=en&fromgroups#!forum/hft-discuss)
+
+Some near-term goals include:
+- moving the project to an organization basis (which will involve a name
+  change (watch this space).
+- installing a modern communication toolkit
+- exploring automated deployment and build options
+- discussing the relative strengths and weaknesses of python versus R, as they
+  apply to the hft problem domain.
+    
 ## Technology stack ##
 
 The world of high frequency trading is a broad church of opinion, technology, ideas and motivations.  hft is being developed using many different tools:
@@ -75,13 +87,13 @@ Have a bug or a feature request? [Please open a new issue](https://github.com/to
 
 ## Community
 
+Join the discussions at [hft-discuss](https://groups.google.com/forum/?hl=en&fromgroups#!forum/hft-discuss)
+
 hft is sponsored by [Scarce Capital](http://scarcecapital.com) as an adjunct to client advisory services.
 
 Follow [@scarcecapital on Twitter](http://twitter.com/scarcecapital).
 
-Read, subscribe (and contribute!) to the [The Official hft Blog](http://scarcecapital.com/hft).
-
-The project is partially due to active discussions on the [Open Source HFT Linkedin group](http://www.linkedin.com/groups?home=&gid=4405119&trk=anet_ug_hm)
+Read, subscribe (and contribute!) to the [The hft Blog](http://scarcecapital.com/hft).
 
 ## Contributing
 
