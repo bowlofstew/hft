@@ -1,7 +1,7 @@
 #+Language: en
 #+TITLE: hft,
 #+DESCRIPTION: hft project
-#+AUTHOR: tony day
+#+AUTHOR: Tony Day
 #+STARTUP: logdone
 #+OPTIONS: H:nil num:nil toc:nil \n:nil @:t ::t |:t ^:t f:t TeX:t tags:nil author:nil
 #+COLUMNS: %25ITEM %30tangle %5blog %5top %15PAGE
@@ -346,7 +346,7 @@ CLOSED: [2013-04-23 Tue 14:44]
 :blog:     t
 :END:
 
-  A discussion group has been formed at [hft-discuss](https://groups.google.com/forum/?hl=en&fromgroups#!forum/hft-discuss)
+  A discussion group has been formed at [[https://groups.google.com/forum/?hl%3Den&fromgroups#!forum/hft-discuss][hft-discuss]]
   
   Some near-term goals include:
   - moving the project to an organization basis (which will involve a name
@@ -366,6 +366,96 @@ CLOSED: [2013-04-23 Tue 14:44]
 - [ ] disruptor research
 - [ ] draft 0.2 milestones
 - [ ] connect IB
+
+* technology stack
+
+** zipline
+CLOSED: [2013-04-23 Tue 15:11]
+:LOGBOOK:
+- State "DONE"       from ""           [2013-04-23 Tue 15:11]
+:END:
+:PROPERTIES:
+:blog:     t
+:AUTHOR:   Chris Mahon
+:END:
+
+Zipline is an open-source project that is a candidate for collaboration and
+other synergies with the HFT project.
+
+Zipline is the open-source backtesting engine (written in Python) underlying
+Quantopian, an online trading systems development IDE (again, Python-based)
+and community. Quantopian offers 10 years of 1min data for US stocks and the
+backtesting IDE for free but they plan to generate income from a future
+facility for automating live trade execution.
+
+https://www.quantopian.com/faq
+https://www.quantopian.com/help
+https://github.com/quantopian/zipline/blob/master/README.md
+
+To use the zipline engine, you basically create a Python class that subclasses
+zipline's TradingAlgorithm base class and implement 2 methods, one to
+initialize() data at the start of strategy execution and and another,
+handle_data(), to react to data events (e.g. buy on MA crossover) which are
+typically OHLCV bars but could be of other types such as ticks, corporate
+actions, etc. A strategy is executed by calling the trading algorithm's run()
+method and passing in a data source. Various backtesting metrics are returned
+by the run() method.
+
+Base functionality includes:
+- Loaders for retrieving data from local files, online sources such as yahoo
+  (no live data feeds - data is downloaded in its entirety prior to strategy
+  execution) and the US treasury website for risk-free rates used in metrics
+  such as the Sharpe ratio
+
+- Multiple symbols can be tracked within a dataset and referenced in a single
+  strategy execution
+
+- A few basic technical indicators out of the box such as simple moving
+  average, returns, standard deviation of prices and VWAP
+
+- Data is provisioned to the strategy via events on the backtest timeline to
+  reflect live trading and reduce the scope for future data snooping
+
+- Only market orders supported - no doubt limit and stop orders are planned as
+  a future enhancement
+
+- Trade execution includes 2 slippage models and a basic commission calc
+
+- No order book model
+
+- A portfolio of holdings can be accumulated and tracked
+
+- A variety of metrics are calculated cumulatively and per-period (daily basis
+  if intraday bars are used) e.g. strategy and benchmark (defaults to SPX)
+  returns, drawdown, sharpe ratio, sortino ratio, etc
+
+- Mainly focused on stocks for the time being e.g. the concept of end of
+  trading day seems to be important vs day continuous trading of forex and
+  overnight trading of futures, no margin trading
+
+- Of course there's plenty of scope to extend the base functionality through
+  custom code - this may be more constrained in the IDE than in a local
+  development environment.
+
+- Trading system optimization isn't supported yet but appears to be an active
+  area of research for a future enhancement. One of the developers gave a talk
+  at the recent PyData conference about using IPython Parallel, StarCluster,
+  etc. to spawn multiple parallel workers in the cloud as well as covering
+  techniques to efficiently search the parameter space including a Bayesian
+  approach for identifying high probability regions to maximize the objective
+  function.
+
+  http://vimeo.com/63273425
+
+
+The gist below is a first pass through the codebase tracking the call stack
+and classes/objects involved in the execution of the trading algorithm run()
+method for the supplied dual moving average sample strategy and recorded the
+main features in a single file. This is useful to quickly refresh memory
+of the code flow rather than wading though multiple source files.
+
+https://gist.github.com/cnmgh/e72e0e08de2986c2180d
+
 
 * hft project design
 
