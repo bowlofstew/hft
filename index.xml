@@ -3,11 +3,154 @@
   <title>hft,</title>
   <link href="http://scarcecapital.com/hft/index.xml" rel="self" />
   <link href="http://scarcecapital.com/hft"/>
-  <updated>2013-04-22T17:18:54Z</updated>
+  <updated>2013-04-23T16:10:31Z</updated>
   <id>http://scarcecapital.com/hft/index.xml</id>
   <entry>
+<title type="html">zipline</title>
+<author><name>Tony Day</name></author>
+<link href="http://scarcecapital.com/hft/blog/zipline.html"/>
+<updated>2013-04-23T15:11:00Z</updated>
+<published>2013-04-23T15:11:00Z</published>
+<id>http://scarcecapital.com/hft/blog/zipline.html</id>
+<content type="html">&lt;p&gt;
+Zipline is an open-source project that is a candidate for collaboration and
+other synergies with the HFT project.
+&lt;/p&gt;
+
+&lt;p&gt;
+Zipline is the open-source backtesting engine (written in Python) underlying
+Quantopian, an online trading systems development IDE (again, Python-based)
+and community. Quantopian offers 10 years of 1min data for US stocks and the
+backtesting IDE for free but they plan to generate income from a future
+facility for automating live trade execution.
+&lt;/p&gt;
+
+&lt;p&gt;
+&lt;a href="https://www.quantopian.com/faq"&gt;https://www.quantopian.com/faq&lt;/a&gt;
+&lt;a href="https://www.quantopian.com/help"&gt;https://www.quantopian.com/help&lt;/a&gt;
+&lt;a href="https://github.com/quantopian/zipline/blob/master/README.md"&gt;https://github.com/quantopian/zipline/blob/master/README.md&lt;/a&gt;
+&lt;/p&gt;
+
+&lt;p&gt;
+To use the zipline engine, you basically create a Python class that subclasses
+zipline's TradingAlgorithm base class and implement 2 methods, one to
+initialize() data at the start of strategy execution and and another,
+handle_data(), to react to data events (e.g. buy on MA crossover) which are
+typically OHLCV bars but could be of other types such as ticks, corporate
+actions, etc. A strategy is executed by calling the trading algorithm's run()
+method and passing in a data source. Various backtesting metrics are returned
+by the run() method.
+&lt;/p&gt;
+
+&lt;p&gt;
+Base functionality includes:
+&lt;/p&gt;
+&lt;ul class="org-ul"&gt;
+&lt;li&gt;Loaders for retrieving data from local files, online sources such as yahoo
+(no live data feeds - data is downloaded in its entirety prior to strategy
+execution) and the US treasury website for risk-free rates used in metrics
+such as the Sharpe ratio
+&lt;/li&gt;
+
+&lt;li&gt;Multiple symbols can be tracked within a dataset and referenced in a single
+strategy execution
+&lt;/li&gt;
+
+&lt;li&gt;A few basic technical indicators out of the box such as simple moving
+average, returns, standard deviation of prices and VWAP
+&lt;/li&gt;
+
+&lt;li&gt;Data is provisioned to the strategy via events on the backtest timeline to
+reflect live trading and reduce the scope for future data snooping
+&lt;/li&gt;
+
+&lt;li&gt;Only market orders supported - no doubt limit and stop orders are planned as
+a future enhancement
+&lt;/li&gt;
+
+&lt;li&gt;Trade execution includes 2 slippage models and a basic commission calc
+&lt;/li&gt;
+
+&lt;li&gt;No order book model
+&lt;/li&gt;
+
+&lt;li&gt;A portfolio of holdings can be accumulated and tracked
+&lt;/li&gt;
+
+&lt;li&gt;A variety of metrics are calculated cumulatively and per-period (daily basis
+if intraday bars are used) e.g. strategy and benchmark (defaults to SPX)
+returns, drawdown, sharpe ratio, sortino ratio, etc
+&lt;/li&gt;
+
+&lt;li&gt;Mainly focused on stocks for the time being e.g. the concept of end of
+trading day seems to be important vs day continuous trading of forex and
+overnight trading of futures, no margin trading
+&lt;/li&gt;
+
+&lt;li&gt;Of course there's plenty of scope to extend the base functionality through
+custom code - this may be more constrained in the IDE than in a local
+development environment.
+&lt;/li&gt;
+
+&lt;li&gt;Trading system optimization isn't supported yet but appears to be an active
+area of research for a future enhancement. One of the developers gave a talk
+at the recent PyData conference about using IPython Parallel, StarCluster,
+etc. to spawn multiple parallel workers in the cloud as well as covering
+techniques to efficiently search the parameter space including a Bayesian
+approach for identifying high probability regions to maximize the objective
+function.
+
+&lt;p&gt;
+&lt;a href="http://vimeo.com/63273425"&gt;http://vimeo.com/63273425&lt;/a&gt;
+&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;
+The gist below is a first pass through the codebase tracking the call stack
+and classes/objects involved in the execution of the trading algorithm run()
+method for the supplied dual moving average sample strategy and recorded the
+main features in a single file. This is useful to quickly refresh memory
+of the code flow rather than wading though multiple source files.
+&lt;/p&gt;
+
+&lt;p&gt;
+&lt;a href="https://gist.github.com/cnmgh/e72e0e08de2986c2180d"&gt;https://gist.github.com/cnmgh/e72e0e08de2986c2180d&lt;/a&gt;
+&lt;/p&gt;
+</content>
+</entry>
+<entry>
+<title type="html">Project News April 23,2013</title>
+<author><name>Tony Day</name></author>
+<link href="http://scarcecapital.com/hft/blog/project-news-april-232013.html"/>
+<updated>2013-04-23T14:44:00Z</updated>
+<published>2013-04-23T14:44:00Z</published>
+<id>http://scarcecapital.com/hft/blog/project-news-april-232013.html</id>
+<content type="html">&lt;p&gt;
+A discussion group has been formed at &lt;a href="https://groups.google.com/forum/?hl=en&amp;fromgroups#!forum/hft-discuss"&gt;hft-discuss&lt;/a&gt;
+&lt;/p&gt;
+
+&lt;p&gt;
+Some near-term goals include:
+&lt;/p&gt;
+&lt;ul class="org-ul"&gt;
+&lt;li&gt;moving the project to an organization basis (which will involve a name
+change (watch this space).
+&lt;/li&gt;
+&lt;li&gt;installing a modern communication toolkit
+&lt;/li&gt;
+&lt;li&gt;exploring automated deployment and build options
+&lt;/li&gt;
+&lt;li&gt;discussing the relative strengths and weaknesses of python versus R, as they
+apply to the hft problem domain.
+&lt;/li&gt;
+&lt;/ul&gt;
+</content>
+</entry>
+<entry>
 <title type="html">Signal Prediction</title>
-<author><name>tony day</name></author>
+<author><name>Tony Day</name></author>
 <link href="http://scarcecapital.com/hft/blog/signal-prediction.html"/>
 <updated>2013-04-22T17:12:00Z</updated>
 <published>2013-04-22T17:12:00Z</published>
@@ -648,7 +791,7 @@ refactored name.  Previous post referred to weighted.historical
 </entry>
 <entry>
 <title type="html">Statistical Forecasting</title>
-<author><name>tony day</name></author>
+<author><name>Tony Day</name></author>
 <link href="http://scarcecapital.com/hft/blog/statistical-forecasting.html"/>
 <updated>2013-04-17T16:23:00Z</updated>
 <published>2013-04-17T16:23:00Z</published>
@@ -1026,7 +1169,7 @@ of the proposed system design.
 </entry>
 <entry>
 <title type="html">Latency Research</title>
-<author><name>tony day</name></author>
+<author><name>Tony Day</name></author>
 <link href="http://scarcecapital.com/hft/blog/latency-research.html"/>
 <updated>2013-04-12T16:46:00Z</updated>
 <published>2013-04-12T16:46:00Z</published>
@@ -1437,7 +1580,7 @@ g &lt;span style="color: #b9a16c;"&gt;+&lt;/span&gt; &lt;span style="color: #7a9
 </entry>
 <entry>
 <title type="html">Market Feed Selection</title>
-<author><name>tony day</name></author>
+<author><name>Tony Day</name></author>
 <link href="http://scarcecapital.com/hft/blog/market-feed-selection.html"/>
 <updated>2013-04-12T12:46:00Z</updated>
 <published>2013-04-12T12:46:00Z</published>
@@ -1486,7 +1629,7 @@ a free trial
 </entry>
 <entry>
 <title type="html">Candidate Structure</title>
-<author><name>tony day</name></author>
+<author><name>Tony Day</name></author>
 <link href="http://scarcecapital.com/hft/blog/candidate-structure.html"/>
 <updated>2013-04-11T16:46:00Z</updated>
 <published>2013-04-11T16:46:00Z</published>
@@ -1875,111 +2018,6 @@ g &lt;span style="color: #dfaf8f;"&gt;&amp;lt;-&lt;/span&gt; importDotFile &lt;s
 &lt;/table&gt;
 &lt;/div&gt;
 &lt;/div&gt;
-</content>
-</entry>
-<entry>
-<title type="html">Welcome to hft,</title>
-<author><name>tony day</name></author>
-<link href="http://scarcecapital.com/hft/blog/welcome-to-hft.html"/>
-<updated>2013-04-11T15:47:00Z</updated>
-<published>2013-04-11T15:47:00Z</published>
-<id>http://scarcecapital.com/hft/blog/welcome-to-hft.html</id>
-<content type="html">&lt;p&gt;&lt;img src="&lt;lisp&gt;(ob:path-to-root)&lt;/lisp&gt;/&lt;lisp&gt;(ob:blog-assets-dir
-BLOG)&lt;/lisp&gt;/hft-blue.png" width="100" alt=""&gt;&lt;/p&gt;
-
-&lt;br&gt;
-
-&lt;p&gt;HFT is a small project with a big ambition. We aim to build the worlds best
-algorithmic trading platform using the best off-the-shelf open source
-technology stack to be found. And all of this on a tight budget.&lt;/p&gt;
-
-&lt;p&gt;HFT is created and maintained by &lt;a href="http://twitter.com/tonyday567"&gt;Tony Day&lt;/a&gt;.&lt;/p&gt;
-
-&lt;h1&gt;Quick Start&lt;/h1&gt;
-
-&lt;p&gt;There is no quick start for hft.  The easiest way to get up to speed is to read the project &lt;a href="http://scarcecapital.com/hft"&gt;blog&lt;/a&gt;.  If you're interested in contributing to development or find a logic bug, then fork me with:&lt;/p&gt;
-
-&lt;p&gt;&lt;code&gt;
-$ git clone https://github.com/tonyday567/hft.git
-&lt;/code&gt;&lt;/p&gt;
-
-&lt;h1&gt;Technology Stack&lt;/h1&gt;
-
-&lt;p&gt;The world of high frequency trading is a broad church of opinion, technology, ideas and motivations.  hft is being developed using many different tools:&lt;/p&gt;
-
-&lt;h3&gt;&lt;a href="http://www.gnu.org/software/emacs/"&gt;emacs&lt;/a&gt;, &lt;a href="http://orgmode.org"&gt;org-mode&lt;/a&gt; and literate programming&lt;/h3&gt;
-
-&lt;p&gt;&lt;a href="https://github.com/tonyday567/hft/blob/master/hft.org"&gt;hft.org&lt;/a&gt; is the nerve
-center of active development and contains just about all the important code, research notes
-and design tools being used.&lt;/p&gt;
-
-&lt;p&gt;The project makes heavy use of &lt;a href="http://orgmode.org/worg/org-contrib/babel/"&gt;babel&lt;/a&gt; to pick and mix between coding environments and languages, whilst still remaining &lt;a href="http://www.haskell.org/haskellwiki/Literate_programming"&gt;literate&lt;/a&gt;:&lt;/p&gt;
-
-&lt;blockquote&gt;
-  &lt;p&gt;The main idea is to regard a program as a communication to human beings rather than as a set of instructions to a computer. ~ Knuth&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;Similarly, a project such as hft is as much about communication between human beings as it is about maintenance of source code.&lt;/p&gt;
-
-&lt;h3&gt;&lt;a href="http://www.r-project.org"&gt;R&lt;/a&gt;&lt;/h3&gt;
-
-&lt;p&gt;R is a strongly functional but imperative language being used for rapid
-development and research of hft and algo ideas as they arise. Most everything
-that you can think of (databases, broker interfaces, statistical analysis,
-visualization) has an R package ready to get you up and going in 5 minutes.&lt;/p&gt;
-
-&lt;h3&gt;&lt;a href="http://www.haskell.org/haskellwiki/Haskell"&gt;haskell&lt;/a&gt;&lt;/h3&gt;
-
-&lt;p&gt;R can be many things but what it is least set up for is development of
-asyncronous code. To fill this gap, the project is using haskell to frame the
-system as and when it develops.&lt;/p&gt;
-
-&lt;h3&gt;&lt;a href="http://www.interactivebrokers.com/en/main.php"&gt;Interactive Brokers&lt;/a&gt;&lt;/h3&gt;
-
-&lt;p&gt;Eventually, hft will be broker independent but during the development phase IB
-is the test case. Interactive has the most mature API that works out of the
-box and a demo account so that hft can come pre-plumbed so that (eventually)
-the project can also run out of the box.&lt;/p&gt;
-
-&lt;p&gt;Interactive Brokers consolidates tick data into 0.3 second time slices so it
-isn't appropriate for low-latency work.&lt;/p&gt;
-
-&lt;h3&gt;&lt;a href="http://www.iqfeed.net"&gt;iqfeed&lt;/a&gt;&lt;/h3&gt;
-
-&lt;p&gt;Just because it's open-source doesn't mean that it's cost free. iqfeed has
-been chosen as an initial data feed to base project R&amp;amp;D efforts on. iqfeed
-costs dollars but the software can be downloaded for free and a demo version
-allows live data to flow with a lag.&lt;/p&gt;
-
-&lt;p&gt;A useful way to support the hft project is to let DTN know if you decide to
-purshase iqfeed due to the project.&lt;/p&gt;
-
-&lt;h2&gt;Bug Tracker&lt;/h2&gt;
-
-&lt;p&gt;Have a bug or a feature request? &lt;br&gt; &lt;a href="https://github.com/tonyday567/hft/issues"&gt;Please open a new issue&lt;/a&gt;. &lt;/p&gt;
-
-&lt;h2&gt;Community&lt;/h2&gt;
-
-&lt;p&gt;hft is sponsored by &lt;a href="http://scarcecapital.com"&gt;Scarce Capital&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;Follow &lt;a href="http://twitter.com/scarcecapital"&gt;@scarcecapital on Twitter&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;Read, subscribe (and contribute!) to the hft &lt;a href="http://scarcecapital.com/hft"&gt;blog&lt;/a&gt;.&lt;/p&gt;
-
-&lt;h2&gt;Contributing&lt;/h2&gt;
-
-&lt;p&gt;Please submit all pull requests against the master branch.&lt;/p&gt;
-
-&lt;p&gt;Thanks!&lt;/p&gt;
-
-&lt;h2&gt;Authors&lt;/h2&gt;
-
-&lt;p&gt;&lt;strong&gt;Tony Day&lt;/strong&gt;&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;a href="http://twitter.com/tonyday567"&gt;http://twitter.com/tonyday567&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href="http://github.com/tonyday567"&gt;http://github.com/tonyday567&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;
 </content>
 </entry>
 

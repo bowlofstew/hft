@@ -2,10 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>Welcome to hft,</title>
+    <title>Project News April 23,2013</title>
     <link rel="stylesheet" type="text/css" href="../style/css/scarce.css"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <meta name="generator" content="o-blog version 1.2-147-gccd36b0"/>
+    <meta name="generator" content="o-blog version 1.2-148-g8536e49"/>
 
 <script src="../style/js/jquery-1.7.1.min.js" type="text/javascript"></script>
 <script src="../style/bootstrap/js/bootstrap-modal.js" type="text/javascript"></script>
@@ -60,7 +60,7 @@
      <a href="../about.html"><i>icon-user icon-white</i> About</a>
    </li>
    <li>
-  <a class="caret-before" href="../blog/signal-prediction.html">
+  <a class="caret-before" href="../blog/zipline.html">
        <i class="icon-coffee icon-white">
        </i>
        Blog
@@ -72,7 +72,7 @@
      <ul class="dropdown-menu">
 
 
-<li><a href="../blog/signal-prediction.html">Signal Prediction</a></li><li><a href="../blog/statistical-forecasting.html">Statistical Forecasting</a></li><li><a href="../blog/latency-research.html">Latency Research</a></li><li><a href="../blog/market-feed-selection.html">Market Feed Selection</a></li>
+<li><a href="../blog/zipline.html">zipline</a></li><li><a href="../blog/project-news-april-232013.html">Project News April 23,2013</a></li><li><a href="../blog/signal-prediction.html">Signal Prediction</a></li><li><a href="../blog/statistical-forecasting.html">Statistical Forecasting</a></li>
 
   </ul>
 
@@ -103,9 +103,18 @@
 <div id="page">
   <div class="row">    
     <div class="arrow_nav top">
-      
+      <a class="previous skiphover" href="../blog/signal-prediction.html">
+                                    <span class="symbol">
+                                    </span>
+                                    <span class="label">
+                                       older
+                                    </span>
+                                    <span class="tooltip">
+                                      Signal Prediction
+                                    </span>
+                                 </a>
       <div class="sepline"></div>
-      <a class="previous skiphover" href="../blog/candidate-structure.html">
+      <a class="previous skiphover" href="../blog/zipline.html">
                                     <span class="label">
                                        newer
                                     </span>
@@ -113,7 +122,7 @@
                                        >
                                     </span>                                      
                                     <span class="tooltip">
-                                      Candidate Structure
+                                      zipline
                                     </span>
                                  </a>
     </div>
@@ -122,104 +131,29 @@
     <div class="span9">
       <article>
         <header class="article-header">
-          <h1 class="post-header">Welcome to hft,</h1>
-          <h3 class="date-header">11 April 2013</h3>
+          <h1 class="post-header">Project News April 23,2013</h1>
+          <h3 class="date-header"></h3>
+          <h3 class="date-header">23 April 2013</h3>
         </header>
         <div class="article-content">
-          <p><img src="../assets/hft-blue.png" width="100" alt=""></p>
+          <p>
+A discussion group has been formed at <a href="https://groups.google.com/forum/?hl=en&fromgroups#!forum/hft-discuss">hft-discuss</a>
+</p>
 
-<br>
-
-<p>HFT is a small project with a big ambition. We aim to build the worlds best
-algorithmic trading platform using the best off-the-shelf open source
-technology stack to be found. And all of this on a tight budget.</p>
-
-<p>HFT is created and maintained by <a href="http://twitter.com/tonyday567">Tony Day</a>.</p>
-
-<h1>Quick Start</h1>
-
-<p>There is no quick start for hft.  The easiest way to get up to speed is to read the project <a href="http://scarcecapital.com/hft">blog</a>.  If you're interested in contributing to development or find a logic bug, then fork me with:</p>
-
-<p><code>
-$ git clone https://github.com/tonyday567/hft.git
-</code></p>
-
-<h1>Technology Stack</h1>
-
-<p>The world of high frequency trading is a broad church of opinion, technology, ideas and motivations.  hft is being developed using many different tools:</p>
-
-<h3><a href="http://www.gnu.org/software/emacs/">emacs</a>, <a href="http://orgmode.org">org-mode</a> and literate programming</h3>
-
-<p><a href="https://github.com/tonyday567/hft/blob/master/hft.org">hft.org</a> is the nerve
-center of active development and contains just about all the important code, research notes
-and design tools being used.</p>
-
-<p>The project makes heavy use of <a href="http://orgmode.org/worg/org-contrib/babel/">babel</a> to pick and mix between coding environments and languages, whilst still remaining <a href="http://www.haskell.org/haskellwiki/Literate_programming">literate</a>:</p>
-
-<blockquote>
-  <p>The main idea is to regard a program as a communication to human beings rather than as a set of instructions to a computer. ~ Knuth</p>
-</blockquote>
-
-<p>Similarly, a project such as hft is as much about communication between human beings as it is about maintenance of source code.</p>
-
-<h3><a href="http://www.r-project.org">R</a></h3>
-
-<p>R is a strongly functional but imperative language being used for rapid
-development and research of hft and algo ideas as they arise. Most everything
-that you can think of (databases, broker interfaces, statistical analysis,
-visualization) has an R package ready to get you up and going in 5 minutes.</p>
-
-<h3><a href="http://www.haskell.org/haskellwiki/Haskell">haskell</a></h3>
-
-<p>R can be many things but what it is least set up for is development of
-asyncronous code. To fill this gap, the project is using haskell to frame the
-system as and when it develops.</p>
-
-<h3><a href="http://www.interactivebrokers.com/en/main.php">Interactive Brokers</a></h3>
-
-<p>Eventually, hft will be broker independent but during the development phase IB
-is the test case. Interactive has the most mature API that works out of the
-box and a demo account so that hft can come pre-plumbed so that (eventually)
-the project can also run out of the box.</p>
-
-<p>Interactive Brokers consolidates tick data into 0.3 second time slices so it
-isn't appropriate for low-latency work.</p>
-
-<h3><a href="http://www.iqfeed.net">iqfeed</a></h3>
-
-<p>Just because it's open-source doesn't mean that it's cost free. iqfeed has
-been chosen as an initial data feed to base project R&amp;D efforts on. iqfeed
-costs dollars but the software can be downloaded for free and a demo version
-allows live data to flow with a lag.</p>
-
-<p>A useful way to support the hft project is to let DTN know if you decide to
-purshase iqfeed due to the project.</p>
-
-<h2>Bug Tracker</h2>
-
-<p>Have a bug or a feature request? <br> <a href="https://github.com/tonyday567/hft/issues">Please open a new issue</a>. </p>
-
-<h2>Community</h2>
-
-<p>hft is sponsored by <a href="http://scarcecapital.com">Scarce Capital</a></p>
-
-<p>Follow <a href="http://twitter.com/scarcecapital">@scarcecapital on Twitter</a>.</p>
-
-<p>Read, subscribe (and contribute!) to the hft <a href="http://scarcecapital.com/hft">blog</a>.</p>
-
-<h2>Contributing</h2>
-
-<p>Please submit all pull requests against the master branch.</p>
-
-<p>Thanks!</p>
-
-<h2>Authors</h2>
-
-<p><strong>Tony Day</strong></p>
-
-<ul>
-<li><a href="http://twitter.com/tonyday567">http://twitter.com/tonyday567</a></li>
-<li><a href="http://github.com/tonyday567">http://github.com/tonyday567</a></li>
+<p>
+Some near-term goals include:
+</p>
+<ul class="org-ul">
+<li>moving the project to an organization basis (which will involve a name
+change (watch this space).
+</li>
+<li>installing a modern communication toolkit
+</li>
+<li>exploring automated deployment and build options
+</li>
+<li>discussing the relative strengths and weaknesses of python versus R, as they
+apply to the hft problem domain.
+</li>
 </ul>
 
         </div>

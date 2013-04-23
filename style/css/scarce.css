@@ -8698,6 +8698,7 @@ code {
   color: white;
   border: 3px solid #fafafa;
 }
+.gist,
 #page pre.src,
 #page pre.example {
   background: none repeat scroll 0% 0% #f8f8f8;
@@ -8714,6 +8715,7 @@ code {
   word-break: normal;
   word-wrap: normal;
   white-space: pre;
+  resize: both;
 }
 .org-comment-delimiter,
 .org-comment {
