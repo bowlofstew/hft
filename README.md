@@ -32,55 +32,6 @@ Some near-term goals include:
 - discussing the relative strengths and weaknesses of python versus R, as they
   apply to the hft problem domain.
     
-## Technology stack ##
-
-The world of high frequency trading is a broad church of opinion, technology, ideas and motivations.  hft is being developed using many different tools:
-
-### [emacs](http://www.gnu.org/software/emacs/), [org-mode](http://orgmode.org) and [literate programming](http://en.wikipedia.org/wiki/Literate_programming)###
-
-[hft.org](https://github.com/tonyday567/hft/blob/master/hft.org) is the nerve
-center of active development and contains just about all the important code, research notes
-and design tools being used.
-
-The project makes heavy use of [babel](http://orgmode.org/worg/org-contrib/babel/) to pick and mix between coding environments and languages, whilst still remaining [literate](http://www.haskell.org/haskellwiki/Literate_programming):
-
->The main idea is to regard a program as a communication to human beings rather than as a set of instructions to a computer. ~ Knuth
-
-Similarly, a project such as hft is as much about communication between human beings as it is about maintenance of source code.
-
-### [R](http://www.r-project.org) ###
-
-R is a strongly functional but imperative language being used for rapid
-development and research of hft and algo ideas as they arise. Most everything
-that you can think of (databases, broker interfaces, statistical analysis,
-visualization) has an R package ready to get you up and going in 5 minutes.
-
-### [haskell](http://www.haskell.org/haskellwiki/Haskell) ###
-
-R can be many things but what it is least set up for is development of
-asyncronous code. To fill this gap, the project is using haskell to frame the
-system as and when it develops.
-
-### [Interactive Brokers](http://www.interactivebrokers.com/en/main.php) ###
-
-Eventually, hft will be broker independent but during the development phase IB
-is the test case. Interactive has the most mature API that works out of the
-box and a demo account so that hft can come pre-plumbed so that (eventually)
-the project can also run out of the box.
-
-Interactive Brokers consolidates tick data into 0.3 second time slices so it
-isn't appropriate for low-latency work.
-
-### [iqfeed](http://www.iqfeed.net)  ###
-
-Just because it's open-source doesn't mean that it's cost free. iqfeed has
-been chosen as an initial data feed to base project R&D efforts on. iqfeed
-costs dollars but the software can be downloaded for free and a demo version
-allows live data to flow with a lag.
-
-A useful way to support the hft project is to let DTN know if you decide to
-purshase iqfeed due to the project.
-
 ## Bug tracker
 
 Have a bug or a feature request? [Please open a new issue](https://github.com/tonyday567/hft/issues). 
