@@ -20,6 +20,10 @@ $ git clone https://github.com/tonyday567/hft.git
 
 ## News
 
+24 April, 2013
+
+travis hook in
+
 23 April, 2013
 
 A discussion group has been formed at [hft-discuss](https://groups.google.com/forum/?hl=en&fromgroups#!forum/hft-discuss)
