@@ -22,7 +22,7 @@ $ git clone https://github.com/tonyday567/hft.git
 
 24 April, 2013
 
-travis hook in
+travis hook going in for a simple build
 
 23 April, 2013
 
