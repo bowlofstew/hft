@@ -599,10 +599,6 @@ digraph G {
 #+end_src
 
 *** haskell interaction
-:PROPERTIES:
-:blog:
-:top:
-:END:
 
 Via haskell, the dot chart can be the specifications for an actual system as well as a
 representation. And via svg technology, the picture can also be modified to
@@ -948,7 +944,7 @@ To (eventually) compile and run the hft project, compile and run the following c
 
 ** Controller.hs
 :PROPERTIES:
-:tangle:   haskell/Controller.hs
+:tangle:   haskell/dev/Controller.hs
 :END:
 
 #+begin_src haskell
@@ -975,7 +971,7 @@ main = do
 
 ** ControllerTest.hs
 :PROPERTIES:
-:tangle:   haskell/ControllerTest.hs
+:tangle:   haskell/dev/ControllerTest.hs
 :END:
 
 #+begin_src haskell
@@ -1259,9 +1255,10 @@ R sucks at asynchronous programming.
 
 ** TODO haskell interfacing
 SCHEDULED: <2013-04-21 Sun>
-*** feed
+
+*** Feed
 :PROPERTIES:
-:tangle:   haskell/feed.hs
+:tangle:   haskell/dev/Feed.hs
 :END:
 
 no automation or control yet
@@ -1271,25 +1268,121 @@ no automation or control yet
 To compile and run:
 
 #+begin_src sh :results output :tangle no
-cd haskell
-ghc --make feed.hs threaded
-./feed data.out
+cd haskell/dev
+ghc --make Feed.hs threaded
+./Feed data.out
 #+end_src
 
 #+begin_src haskell
+  import Control.Concurrent
+  import Network
+  import System.Environment
+  import System.Process
+  import System.IO
+  import Control.Exception
+  import System.Exit
+  import Control.Monad (forever)
+  import Data.Time.Clock
+  import Data.Time.Format
+  import Data.Time.Calendar
+  import System.Locale
+  
+  
+  con :: String -> String -> IO ()
+  con host port = do
+      h <- connectTo host $ PortNumber $ toEnum $ read port
+      hSetBuffering stdout LineBuffering
+      hSetBuffering h      LineBuffering
+      done <- newEmptyMVar
+  
+      _ <- forkIO $ (hGetContents h >>= putStr)
+                  `finally` tryPutMVar done ()
+  
+      _ <- forkIO $ (getContents >>= hPutStr h)
+                  `finally` tryPutMVar done ()
+  
+                  -- Wait for at least one of the above threads to complete
+      takeMVar done
+  
+  conFileTime :: String -> String -> String -> IO ()
+  conFileTime host port file = do
+      h <- connectTo host $ PortNumber $ toEnum $ read port
+      f <- openFile file WriteMode
+      hSetBuffering stdout LineBuffering
+      hSetBuffering h      LineBuffering
+      hSetBuffering f      LineBuffering
+      done <- newEmptyMVar
+  
+      _ <- forkIO $ forever (do
+                          t <- getCurrentTimeString
+                          st <- hGetLine h
+                          hPutStrLn f $ t ++ "," ++ st)
+                  `finally` tryPutMVar done ()
+  
+      _ <- forkIO $ (getContents >>= hPutStr h)
+                  `finally` tryPutMVar done ()
+  
+                  -- Wait for at least one of the above threads to complete
+      takeMVar done
+  
+  conAdmin :: String -> IO ()
+  conAdmin cmds = do
+    con "localhost" "9300"
+    putStr cmds
+  
+  conStream :: String -> IO ()
+  conStream cmds = do
+    con "localhost" "5009"
+    putStr cmds
+  
+  conLookup :: String -> IO ()
+  conLookup cmds = do
+    con "localhost" "9100"
+    putStr cmds
+  
+  logon :: IO ()
+  logon = do
+    let cmd = "wine"
+        args = ["Z:\\Users\\tonyday\\wine\\iqfeed\\iqconnect.exe", "-product IQFEED_DEMO -version 1"]
+    _ <- rawSystem cmd args
+    return()
+  
+  
+  getCurrentTimeString :: IO String
+  getCurrentTimeString = do
+     now <- getCurrentTime
+     let offset = diffUTCTime  (UTCTime (ModifiedJulianDay 0) (secondsToDiffTime 0)) (UTCTime (ModifiedJulianDay 0) (secondsToDiffTime (4 * 60 * 60)))
+     return (formatTime defaultTimeLocale "%H:%M:%S%Q" $ addUTCTime offset now)
+  
+  
+  main :: IO ExitCode
+  main = do
+    [file] <- getArgs
+    _ <- forkIO (logon)
+    threadDelay $ 1000000 * 10
+    putStr "\ndelay finished\n"
+    conFileTime "localhost" "5009" file
+    return(ExitSuccess)
+#+end_src
+
+*** Hft.Iqconnect
+:PROPERTIES:
+:tangle:   haskell/Hft/Iqconnect.hs
+:END:
+
+#+begin_src haskell :tangle haskell/Hft/Iqconnect.hs
+module Hft.Iqconnect where 
+
 import Control.Concurrent
 import Network
-import System.Environment
 import System.Process
 import System.IO
 import Control.Exception
-import System.Exit
 import Control.Monad (forever)
 import Data.Time.Clock
 import Data.Time.Format
 import Data.Time.Calendar
 import System.Locale
-
 
 con :: String -> String -> IO ()
 con host port = do
@@ -1356,7 +1449,15 @@ getCurrentTimeString = do
    now <- getCurrentTime
    let offset = diffUTCTime  (UTCTime (ModifiedJulianDay 0) (secondsToDiffTime 0)) (UTCTime (ModifiedJulianDay 0) (secondsToDiffTime (4 * 60 * 60)))
    return (formatTime defaultTimeLocale "%H:%M:%S%Q" $ addUTCTime offset now)
+#+end_src
 
+*** Iqtest
+
+#+begin_src haskell :tangle haskell/test/Iqtest.hs
+import Control.Concurrent
+import System.Environment
+import System.Exit
+import Hft.Iqconnect
 
 main :: IO ExitCode
 main = do
@@ -1368,147 +1469,223 @@ main = do
   return(ExitSuccess)
 #+end_src
 
-*** NEXT connect
+
+*** Hft.Iqtest development
 SCHEDULED: <2013-05-04 Sat>
 :LOGBOOK:
 CLOCK: [2013-03-24 Sun 17:15]--[2013-03-26 Tue 11:26] => 42:11
 :END:
 :PROPERTIES:
-:tangle:   haskell/iqconnect.hs
+:tangle:   haskell/dev/Iqtest.hs
 :END:
 
-In development: feed control and management
 
-- [ ] control process
-  - try to connect to Admin
-  - if connection refused, logon
-  - try again
-  - limit attempts
-  - admin listening to maintain connection
-  - open stream data (port 5009)
-  - issue instructions
-  - logger
+- things that need to be (step 1)
+  - a logon process
+  - a delay if we are logging on
+  - an admin listener and logger
+  - an admin writer
+  - an IO to start the process
+  - an IO to stop the process
+  - a level1 event feed listener and logger
+  - a level1 event feed writer
+  - a level2 event feed listener and logger
+  - a level2 event feed writer
+  - a history lookerupperer writer
+  - a history lookerupperer listener and logger
+  - code that decides what is written to each port
+  - a place to log to + a stamp
+  - a Controller (a big ? on this) that isn't main
 
-- [ ] process monitor
-    - [ ] timer
-    - [ ] counts
-- [ ] history lookups
-- [ ] news information processing
-- [ ] error reporting
-  - [ ] dodgy trades and quotes
-  - [ ] specials
+- abstractions
+  - these are all threads
+  - portWriter
+  - portReader (portListener)
+  - portLogger (is this a specialisation of portReader)
+
+- state information
+  - is iqconnect up and are we logged on?
+    - interrogation of system threads?
+    - is there anything spitting out of admin port?
+  - which processes are running?  Do we need to know this?
+    - promises baked in to portWriter etc (?)
+    - do processes need to register with a Controller?
+
+- things that need to be (step 2):
+
+  - login
+    - starts (restarts) iqconnect
+    - is encapsulated entirely within the manager(?)  In other words,
+      it will only be invoked by the manager when admin port throws
+      an error.
+
+  - manager
+    - an admin portReader that
+    - decides if iqconnect is logged on (how? - via port error)
+    - relogs if the connection is bung (up to a limit)
+      - delays other threads until relogged
+    - listens forever
+    - decides when to stop
+    - decides when to start
+    - stops and starts other processes (?)
+
+  - a main that
+    - starts manager
+    - starts ALL portReaders
+    - starts the worker pool
+    - listens for a stop instruction (IO)
+    - stops everything
+    - decides what to write to ports
+    - listens on STDIN
+
+  - a feed portReader that
+    - stays connected to the feed port
+    - sleeps if port error
+    - logs all STDOUT
+    - same for ALL ports
+
+  - a feed portWriter that
+    - sets the protocol
+    - changes the ticker list
+    - asks for news, fundamentals etc
+    - does other stuff? - check iq feed API
+
+  - a history portWriter that
+    - requests information (ticker, time range) 
+
+  - an admin portWriter that
+
+  - a lookup portWriter that
+
+  - a worker pool (STM) for all threads that
+    - provides a new thread
+    - stop/starts threads (?)
+    - monitors threads (?)
+
+  
+steps
+- heirarchy (small to big)
+    - logon
+    - portReader
+        - portLogger
+    - portWriter
+        - historyWriter
+        - feedWriter
+        - level2Writer
+
+    - workerPool
+    - manager (connection management)
+    - main
 
 #+begin_src haskell
-import Control.Concurrent
-import Network
-import System.Environment
-import System.Process
-import System.IO
-import Control.Exception
-import System.Exit
-import Control.Monad (forever)
-import Data.Time.Clock
-import Data.Time.Format
-import System.Locale
-import Text.Regex.TDFA
+  import Control.Concurrent
+  import Network
+  import System.Environment
+  import System.Process
+  import System.IO
+  import Control.Exception
+  import System.Exit
+  import Control.Monad (forever)
+  import Data.Time.Clock
+  import Data.Time.Format
+  import System.Locale
+  import Text.Regex.TDFA
+  
+  logon :: IO ()
+  logon = do
+    let cmd = "wine"
+        args = ["Z:\\Users\\tonyday\\wine\\iqfeed\\iqconnect.exe", "-product IQFEED_DEMO -version 1"]
+    _ <- rawSystem cmd args
+    return()
+  
+  
 
 
-conWrapped :: String -> String -> IO ()
-conWrapped host port = do
-    h <- try (connectTo host $ PortNumber $ toEnum $ read port) :: IO (Either SomeException Handle)
-    case h of
-      Left ex -> case () of _ 
-                              | "connect: does not exist" =~ show ex  -> logon
-                              | otherwise -> putStrLn $ "Caught Exception: " ++ show ex
- 
-      Right val -> hGetContents val >>= putStr
-    return ()
 
 
-conLogin :: String -> String -> IO ()
-conLogin host port = do
-    h <- try (connectTo host $ PortNumber $ toEnum $ read port) :: IO (Either SomeException Handle)
-    case h of
-      Left ex -> putStrLn $ "Caught Exception: " ++ show ex
-      Right val -> hGetContents val >>= putStr
-    return ()
-    
 
-con :: String -> String -> IO ()
-con host port = do
-    h <- connectTo host $ PortNumber $ toEnum $ read port
-    hSetBuffering stdout LineBuffering
-    hSetBuffering h      LineBuffering
-    done <- newEmptyMVar
-
-    _ <- forkIO $ (hGetContents h >>= putStr)
-                `finally` tryPutMVar done ()
-
-    _ <- forkIO $ (getContents >>= hPutStr h)
-                `finally` tryPutMVar done ()
-
-                -- Wait for at least one of the above threads to complete
-    takeMVar done
-
-
-conFileTime :: String -> String -> String -> IO ()
-conFileTime host port file = do
-    h <- connectTo host $ PortNumber $ toEnum $ read port
-    f <- openFile file WriteMode
-    hSetBuffering stdout LineBuffering
-    hSetBuffering h      LineBuffering
-    hSetBuffering f      LineBuffering
-    done <- newEmptyMVar
-
-    _ <- forkIO $ forever (do
-                        t <- getCurrentTimeString
-                        st <- hGetLine h
-                        hPutStrLn f $ t ++ "," ++ st)
-                `finally` tryPutMVar done ()
-
-    _ <- forkIO $ (getContents >>= hPutStr h)
-                `finally` tryPutMVar done ()
-
-                -- Wait for at least one of the above threads to complete
-    takeMVar done
-
-conAdmin :: String -> IO ()
-conAdmin cmds = do
-  con "localhost" "9300"
-  putStr cmds
-
-conStream :: String -> IO ()
-conStream cmds = do
-  con "localhost" "5009"
-  putStr cmds
-
-conLookup :: String -> IO ()
-conLookup cmds = do
-  con "localhost" "9100"
-  putStr cmds
-
-logon :: IO ()
-logon = do
-  let cmd = "wine"
-      args = ["Z:\\Users\\tonyday\\wine\\iqfeed\\iqconnect.exe", "-product IQFEED_DEMO -version 1"]
-  _ <- rawSystem cmd args
-  return()
-
-
-getCurrentTimeString :: IO String
-getCurrentTimeString = do
-   now <- getCurrentTime
-   return (formatTime defaultTimeLocale "%H:%M:%S%Q" now)
-
-
-main :: IO ExitCode
-main = do
-  [file] <- getArgs
-  -- _ <- forkIO (logon)
-  -- threadDelay $ 1000000 * 6
-  -- putStr "\ndelay finished\n"
-  conFileTime "localhost" "5009" file
-  return(ExitSuccess)
+  start :: String -> String -> IO ()
+  start host port = do
+      h <- try (connectTo host $ PortNumber $ toEnum $ read port) :: IO (Either SomeException Handle)
+      case h of
+        Left ex -> case () of _ 
+                                | "connect: does not exist" =~ show ex  -> logon
+                                | otherwise -> putStrLn $ "Caught Exception: " ++ show ex
+   
+        Right val -> hGetContents val >>= putStr
+      return ()
+  
+  
+  
+  con :: String -> String -> IO ()
+  con host port = do
+      h <- connectTo host $ PortNumber $ toEnum $ read port
+      hSetBuffering stdout LineBuffering
+      hSetBuffering h      LineBuffering
+      done <- newEmptyMVar
+  
+      _ <- forkIO $ (hGetContents h >>= putStr)
+                  `finally` tryPutMVar done ()
+  
+      _ <- forkIO $ (getContents >>= hPutStr h)
+                  `finally` tryPutMVar done ()
+  
+                  -- Wait for at least one of the above threads to complete
+      takeMVar done
+  
+  
+  conFileTime :: String -> String -> String -> IO ()
+  conFileTime host port file = do
+      h <- connectTo host $ PortNumber $ toEnum $ read port
+      f <- openFile file WriteMode
+      hSetBuffering stdout LineBuffering
+      hSetBuffering h      LineBuffering
+      hSetBuffering f      LineBuffering
+      done <- newEmptyMVar
+  
+      _ <- forkIO $ forever (do
+                          t <- getCurrentTimeString
+                          st <- hGetLine h
+                          hPutStrLn f $ t ++ "," ++ st)
+                  `finally` tryPutMVar done ()
+  
+      _ <- forkIO $ (getContents >>= hPutStr h)
+                  `finally` tryPutMVar done ()
+  
+                  -- Wait for at least one of the above threads to complete
+      takeMVar done
+  
+  conAdmin :: String -> IO ()
+  conAdmin cmds = do
+    con "localhost" "9300"
+    putStr cmds
+  
+  conStream :: String -> IO ()
+  conStream cmds = do
+    con "localhost" "5009"
+    putStr cmds
+  
+  conLookup :: String -> IO ()
+  conLookup cmds = do
+    con "localhost" "9100"
+    putStr cmds
+  
+  
+  
+  getCurrentTimeString :: IO String
+  getCurrentTimeString = do
+     now <- getCurrentTime
+     return (formatTime defaultTimeLocale "%H:%M:%S%Q" now)
+  
+  
+  main :: IO ExitCode
+  main = do
+    [file] <- getArgs
+    -- _ <- forkIO (logon)
+    -- threadDelay $ 1000000 * 6
+    -- putStr "\ndelay finished\n"
+    conFileTime "localhost" "5009" file
+    return(ExitSuccess)
 #+end_src
 
 
@@ -1516,7 +1693,7 @@ main = do
 
 from http://www.haskell.org/haskellwiki/Background_thread_example
 
-#+begin_src haskell :tangle haskell/background.hs
+#+begin_src haskell :tangle haskell/dev/Background.hs
 import Control.Monad
 import Control.Concurrent
 import Control.Exception as E
@@ -2236,6 +2413,18 @@ From the R database of the one day quote ticks...
 
 
 
+** April23
+
+Hacking around with the April 23 data
+- [ ] create module from Feed code
+  [[http://www.haskell.org/tutorial/modules.html][A Gentle Introduction to Haskell: Modules]]
+
+- [ ] level 1 historical tick data download
+- [ ] level 2 ticks
+- [ ] timestamp for first twitter post
+
+
+
 * R database
 
 Experimenting with the mmap package in R, using this as a roll-your-own column database.
@@ -2818,7 +3007,7 @@ There's a few hypotheses guilding the evolution of the algorithm design:
   simultaneously and with certainty.
 - that a comparative advantage of the HFT project is in algorithm design
   rather than raw speed.
-** Statistical Forecasting
+** Statistical Forecasting                                               :R:
 CLOSED: [2013-04-17 Wed 16:23]
 :LOGBOOK:
 - State "DONE"       from ""           [2013-04-17 Wed 16:23]
@@ -3106,9 +3295,8 @@ of the proposed system design.
 
 
 
-** Signal Prediction
+** Signal Prediction                                                     :R:
 CLOSED: [2013-04-22 Mon 17:12] 
-SCHEDULED: <2013-04-20 Sat>
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2013-04-22 Mon 17:12]
 :END:
@@ -3769,7 +3957,7 @@ signals[0] = some.linear.function(signals[1], old.data.stream[0])
 
 **** moment calcs
 :LOGBOOK:
-CLOCK: [2013-04-11 Thu 15:46]
+CLOCK: [2013-04-11 Thu 15:46]--[2013-04-24 Wed 09:38] => 305:52
 CLOCK: [2013-01-09 Wed 18:04]--[2013-01-13 Sun 13:10] => 91:06
 :END:
 
@@ -4552,15 +4740,97 @@ Ways to perform forecasting
 * event stream engineering
 ** NEXT disruptor
 SCHEDULED: <2013-04-20 Sat>
-- [ ] download latest repo
-- [ ] grok purposes and design
+:LOGBOOK:
+CLOCK: [2013-04-24 Wed 09:38]
+:END:
 
-The disruptor is a quality open-source project with a committment to low-latency.
+The disruptor scheme is at the center of many peoples thinking about
+low-latency and process design for HFT, and the benchmark for cutting-edge low-latency.
 
-[[https://github.com/odeheurles/Disruptor-net][disruptor project]]
-[[http://disruptor.googlecode.com/files/Disruptor-1.0.pdf][disruptor docs]]
-[[http://lmax-exchange.github.com/disruptor/][lmax]]
+The key concepts (and this is a lame list to get started - please read the
+references) include:
+
+- the disruptor is a queue designed with the idea that queues are most often
+  empty or full. The queue is a cyclical array (called a ring buffer) with a
+  buffer size equal to a power of 2.
+- (often) having a single writer (called producer) to avoid cache line contention
+- multiple readers (consumers) that have dependency relationships with each
+  other with these dependencies known to the queue.
+- checks (memory barriers) simply guarding queue over- and under- runs (producers
+  getting too far ahead or consumers being too fast)
+- polling information (on producers and consumers) via the queue.  Recent
+  post og the groups suggest consumer polling might be better. 
+- achieving lock-free concurrency via producer separation and consumer
+  tracking (called the consumer cursor)
+- avoids (L2?) cache misses with variable padding
+- in recent times, the 'worker pool' is leading to large performance
+  gains (I don't know what it is exactly - just repeating the group
+  discussions)
+
+I'd be interested in feedback on porting these concepts to haskell:
+- I don't see anything in hackage remotely similar, but I do see plenty of
+  comparable concepts like cache-miss avoidance, STM worker pools etc etc. 
+- this would provide quite a good reference for how much slower haskell is
+  compared with imperative-style methods.
+- (for me), the translation of the concepts to haskell is difficult.  So much
+  of the disruptor design pattern is imperative (do this exactly given system
+  architecture). Thinking in terms of promises and 'what is' may lead to a
+  very different look and feel, and good insight as to the differences
+  haskell brings to the problem domain.
+- I suspect that haskell could start to perform very well when there are
+  multiple writers (producers) and when there are a large number of
+  interdependent readers (consumers). I have zero proof of this - just a gut
+  feel.
+- if there is a need to get closer to the metal than haskell can offer, it's
+  best to find this out now and understand why. In this case I imagine the
+  disruptor as a language-independent messaging solution superior to Protocol Buffers.
+
+
+A few references to help:
+
+Active info/code hubs
+
+Main project
+[[https://github.com/LMAX-Exchange/disruptor]]
+http://lmax-exchange.github.io/disruptor/
+
+Collections
+https://github.com/LMAX-Exchange/LMAXCollections
+
+Interesting OSS using disruptor
+http://storm-project.net/
+
+Clojure Library and DSL
+http://userevents.github.io/phaser/
+
+Blogs
+http://blogs.lmax.com/
+
+Martin Thompson blog
+http://mechanical-sympathy.blogspot.co.uk/
+
+Michael Barker blog
+http://bad-concurrency.blogspot.com.au
+
+
+Less active/reference
+
+https://github.com/fsaintjacques/disruptor--
+Performance in C++ is way down compared to main java repo.
+
+Main technical Doc (2 years old now)
+https://github.com/LMAX-Exchange/disruptor/tree/master/docs
+
+trisha's posts
+
+http://mechanitis.blogspot.com.au/2011/06/dissecting-disruptor-whats-so-special.html
+
+Original Martin Fowler piece
 [[http://martinfowler.com/articles/lmax.html][Martin Fowler]]
+
+
+
+
 
 ** messaging
 
@@ -4597,6 +4867,7 @@ http://community.haskell.org/~simonmar/par-tutorial.pdf
 ** TODO connect with IB
 
 * gh-pages production
+
 #+STYLE_DIR: ../style
 #+ASSETS_DIR: assets
 #+TEMPLATE_DIR: ~/stuff/site/templates
@@ -4848,13 +5119,8 @@ http://apple.stackexchange.com/questions/82878/how-to-tell-when-time-has-been-sy
 
 
 
-** TODO notes from HN discussions
+** notes from HN discussions
 https://news.ycombinator.com/item?id=5550930
-
-- [ ] consider switch to python (from R)
-- [ ] bitcoin as a test case?
-
-https://github.com/quantopian/zipline
 
 http://prof7bit.github.io/goxtool/
 

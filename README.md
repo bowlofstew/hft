@@ -31,7 +31,7 @@ Some near-term goals include:
 - exploring automated deployment and build options
 - discussing the relative strengths and weaknesses of python versus R, as they
   apply to the hft problem domain.
-    
+
 ## Bug tracker
 
 Have a bug or a feature request? [Please open a new issue](https://github.com/tonyday567/hft/issues). 

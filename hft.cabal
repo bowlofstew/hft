@@ -1,0 +1,43 @@
+name:              hft
+version:           0.1
+synopsis:          hft project testbed
+homepage:          https://scarcecapital.com/hft
+license:           OtherLicense
+license-file:      LICENSE
+author:            Tony Day
+maintainer:        tonyday567@gmail.com
+category:          Trading
+build-type:        Simple
+stability:         Experimental
+cabal-version:     >= 1.10
+
+extra-source-files: Readme.md
+
+source-repository head
+  type:     git
+  location: git://github.com/tonyday567/hft.git
+
+library
+  exposed-modules:  Hft.Iqconnect
+  build-depends:    base
+                  , process
+                  , network
+                  , time
+                  , regex-tdfa
+                  , old-locale
+  default-language: Haskell2010
+  ghc-options:      -threaded -Wall -O2
+  hs-source-dirs:   haskell
+
+executable iqtest
+  main-is:          IqTest.hs
+  build-depends:    base
+                  , process
+                  , network
+                  , time
+                  , regex-tdfa
+                  , old-locale
+                  , hft
+  default-language: Haskell2010
+  ghc-options:      -threaded -Wall -O2
+  hs-source-dirs:   haskell/test

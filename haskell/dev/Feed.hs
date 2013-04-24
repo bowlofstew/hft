@@ -1,4 +1,4 @@
--- [[file:~/projects/hft/hft.org::*feed][feed:1]]
+-- [[file:~/projects/hft/hft.org::*Feed][Feed:1]]
 
 import Control.Concurrent
 import Network
@@ -90,4 +90,4 @@ main = do
   conFileTime "localhost" "5009" file
   return(ExitSuccess)
 
--- feed:1 ends here
+-- Feed:1 ends here
